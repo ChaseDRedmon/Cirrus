@@ -16,6 +16,7 @@
         <Copyright>MIT 2021 Chase Redmon</Copyright>
         <PackageProjectUrl>https://github.com/ChaseDRedmon/Cirrus</PackageProjectUrl>
         <RepositoryUrl>https://github.com/ChaseDRedmon/Cirrus</RepositoryUrl>
+        <PackageLicenseUrl>https://github.com/ChaseDRedmon/Cirrus/blob/release/LICENSE</PackageLicenseUrl>
     </PropertyGroup>
 
     <ItemGroup>

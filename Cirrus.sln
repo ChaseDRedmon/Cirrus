@@ -1,0 +1,30 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cirrus", "Cirrus\Cirrus.csproj", "{D78D29C1-7C3A-43B1-856A-F122BE09B628}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cirrus.Tests", "Cirrus.Tests\Cirrus.Tests.csproj", "{73124AB0-4D1A-4523-8992-768C88ABF422}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{7DB0C4AC-D7D3-442B-B0E7-5F1AB766E894}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{138BAB78-8684-45C7-8B01-6AB8C0276A07}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D78D29C1-7C3A-43B1-856A-F122BE09B628}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D78D29C1-7C3A-43B1-856A-F122BE09B628}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D78D29C1-7C3A-43B1-856A-F122BE09B628}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D78D29C1-7C3A-43B1-856A-F122BE09B628}.Release|Any CPU.Build.0 = Release|Any CPU
+		{73124AB0-4D1A-4523-8992-768C88ABF422}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{73124AB0-4D1A-4523-8992-768C88ABF422}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{73124AB0-4D1A-4523-8992-768C88ABF422}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{73124AB0-4D1A-4523-8992-768C88ABF422}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{D78D29C1-7C3A-43B1-856A-F122BE09B628} = {7DB0C4AC-D7D3-442B-B0E7-5F1AB766E894}
+		{73124AB0-4D1A-4523-8992-768C88ABF422} = {138BAB78-8684-45C7-8B01-6AB8C0276A07}
+	EndGlobalSection
+EndGlobal

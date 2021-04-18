@@ -10,7 +10,7 @@ using SocketIOClient;
 
 namespace Cirrus.Wrappers
 {
-    public interface IAmbientWeatherRealtime
+    public interface ICirrusRealtime
     {
         /// <summary>
         /// Handler for our OnDataReceived event
@@ -48,28 +48,28 @@ namespace Cirrus.Wrappers
         public Task Unsubscribe();
     }
 
-    public sealed class AmbientWeatherRealtime : IAmbientWeatherRealtime, IDisposable
+    public sealed class CirrusRealtime : ICirrusRealtime, IDisposable
     {
         private readonly ILogger? _log;
         
-        private SocketIO Client { get; set; }
+        private SocketIO? Client { get; set; }
         private static Uri BaseAddress { get; } = new Uri("https://dash2.ambientweather.net");
         private Timer Timer { get; set; }
         
         private CirrusConfig Options { get; }
         
         /// <inheritdoc cref="OnDataReceived"/>
-        public event IAmbientWeatherRealtime.OnDataReceivedHandler OnDataReceived;
+        public event ICirrusRealtime.OnDataReceivedHandler OnDataReceived;
         
         /// <inheritdoc cref="OnSubscribe"/>
-        public event IAmbientWeatherRealtime.OnSubcribeHandler OnSubscribe;
+        public event ICirrusRealtime.OnSubcribeHandler OnSubscribe;
 
-        public AmbientWeatherRealtime(IOptions<CirrusConfig> options, ILogger logger): this(options)
+        public CirrusRealtime(IOptions<CirrusConfig> options, ILogger logger): this(options)
         {
-            _log = logger.ForContext<AmbientWeatherRealtime>();
+            _log = logger.ForContext<CirrusRealtime>();
         }
         
-        public AmbientWeatherRealtime(IOptions<CirrusConfig> options)
+        public CirrusRealtime(IOptions<CirrusConfig> options)
         {
             Options = options.Value;
         }
@@ -114,7 +114,7 @@ namespace Cirrus.Wrappers
         public async Task Unsubscribe()
         {
             _log?.Information("Unsubscribing from the ambient weather websocket service");
-            await Client.EmitAsync("unsubscribe");
+            await Client?.EmitAsync("unsubscribe");
         }
 
         private void OnInternalDisconnectEvent(object sender, string e)
@@ -187,7 +187,7 @@ namespace Cirrus.Wrappers
             GC.SuppressFinalize(this);
         }
 
-        ~AmbientWeatherRealtime()
+        ~CirrusRealtime()
         {
             Dispose(false);
         }

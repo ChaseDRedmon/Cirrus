@@ -132,17 +132,12 @@ namespace Cirrus
         }
 
         /// <inheritdoc />
-        public async IAsyncEnumerable<IEnumerable<Device>> FetchDeviceHistory(TimeSpan numberOfDaysToGoBack, [EnumeratorCancellation] CancellationToken token, bool sliceTheListFromTheBeginningOfTheList = false, bool includeToday = true, int limit = 288)
+        public IAsyncEnumerable<IEnumerable<Device>> FetchDeviceHistory(TimeSpan numberOfDaysToGoBack, [EnumeratorCancellation] CancellationToken token, bool sliceTheListFromTheBeginningOfTheList = false, bool includeToday = true, int limit = 288)
         {
             if (numberOfDaysToGoBack.Days <= 0)
                 throw new ArgumentException("Value must be greater than or equal to 1", nameof(numberOfDaysToGoBack));
 
-            var result = FetchDeviceHistory(numberOfDaysToGoBack.Days, token, sliceTheListFromTheBeginningOfTheList, includeToday, limit);
-
-            await foreach (var day in result)
-            {
-                yield return day;
-            }
+            return FetchDeviceHistory(numberOfDaysToGoBack.Days, token, sliceTheListFromTheBeginningOfTheList, includeToday, limit);
         }
 
         /// <inheritdoc />

@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>netstandard2.1</TargetFramework>
+        <TargetFramework>net5.0</TargetFramework>
         <Nullable>enable</Nullable>
         <RootNamespace>Cirrus</RootNamespace>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
@@ -9,20 +9,21 @@
         <Authors>Chase Redmon</Authors>
         <Description>Ambient Weather API</Description>
         <PackageTags>Ambient Weather API</PackageTags>
-        <PackageVersion>1.0.0</PackageVersion>
-        <AssemblyVersion>1.0.0</AssemblyVersion>
-        <FileVersion>1.0.0</FileVersion>
+        <PackageVersion>1.1.0</PackageVersion>
+        <AssemblyVersion>1.1.0</AssemblyVersion>
+        <FileVersion>1.1.0</FileVersion>
         <Nullable>enable</Nullable>
         <Copyright>MIT 2021 Chase Redmon</Copyright>
         <PackageProjectUrl>https://github.com/ChaseDRedmon/Cirrus</PackageProjectUrl>
         <RepositoryUrl>https://github.com/ChaseDRedmon/Cirrus</RepositoryUrl>
         <PackageLicenseUrl>https://github.com/ChaseDRedmon/Cirrus/blob/release/LICENSE</PackageLicenseUrl>
+        <LangVersion>9</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.1.1" />
-      <PackageReference Include="Microsoft.Extensions.Options" Version="2.1.1" />
-      <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+      <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="5.0.1" />
+      <PackageReference Include="Microsoft.Extensions.Options" Version="5.0.0" />
+      <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
       <PackageReference Include="Serilog" Version="2.10.0" />
       <PackageReference Include="SocketIOClient" Version="2.1.7" />
     </ItemGroup>

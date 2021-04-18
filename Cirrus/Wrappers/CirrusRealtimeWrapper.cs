@@ -52,9 +52,9 @@ namespace Cirrus.Wrappers
     {
         private readonly ILogger? _log;
         
-        private SocketIO? Client { get; set; }
-        private static Uri BaseAddress { get; } = new Uri("https://dash2.ambientweather.net");
-        private Timer Timer { get; set; }
+        private SocketIO? Client { get; }
+        private static Uri BaseAddress { get; } = new("https://dash2.ambientweather.net");
+        private Timer? Timer { get; }
         
         private CirrusConfig Options { get; }
         
@@ -72,11 +72,7 @@ namespace Cirrus.Wrappers
         public CirrusRealtime(IOptions<CirrusConfig> options)
         {
             Options = options.Value;
-        }
-
-        public async Task OpenConnection()
-        {
-            var apiKeys = Options.ApiKey;
+            
             var applicationKey = Options.ApplicationKey;
             
             Client = new SocketIO(BaseAddress, new SocketIOOptions
@@ -91,43 +87,52 @@ namespace Cirrus.Wrappers
                 ReconnectionDelay = 5000, // reconnect after 5 seconds
                 ReconnectionDelayMax = 30000
             });
-
-            Client.On("subscribed", OnInternalSubscribeEvent);
-            Client.On("data", OnInternalDataEvent);
-
-            Client.OnConnected += OnInternalConnectEvent;
-            Client.OnDisconnected += OnInternalDisconnectEvent;
             
-            _log?.Information($"Opening websocket connection: {BaseAddress}");
-            await Client.ConnectAsync();
-            
-            _log?.Information($"Sending Subcribe Command: {BaseAddress}");
-            await Client.EmitAsync("subscribe", apiKeys);
-
             Timer = new Timer { Interval = 10000 };
             Timer.Elapsed += KeepConnectionAlive;
-            Timer.Start();
+        }
+
+        public async Task OpenConnection()
+        {
+            var apiKeys = Options.ApiKey;
+            
+            Client!.On("subscribed", OnInternalSubscribeEvent);
+            Client!.On("data", OnInternalDataEvent);
+
+            Client!.OnConnected += OnInternalConnectEvent;
+            Client!.OnDisconnected += OnInternalDisconnectEvent;
+            
+            _log?.Information($"Opening websocket connection: {BaseAddress}");
+            await Client!.ConnectAsync();
+            
+            _log?.Information($"Sending Subcribe Command: {BaseAddress}");
+            await Client!.EmitAsync("subscribe", apiKeys);
+            
+            Timer!.Start();
 
             await Task.Delay(-1);
         }
 
         public async Task Unsubscribe()
         {
-            _log?.Information("Unsubscribing from the ambient weather websocket service");
-            await Client?.EmitAsync("unsubscribe");
+            if (Client is not null)
+            {
+                _log?.Information("Unsubscribing from the ambient weather websocket service");
+                await Client.EmitAsync("unsubscribe");
+            }
         }
 
         private void OnInternalDisconnectEvent(object sender, string e)
         {
             _log?.Information("API Disconnected");
-            Timer.Stop();
+            Timer!.Stop();
         }
 
         private void OnInternalConnectEvent(object sender, EventArgs e)
         {
             _log?.Information("Connected to API");
 
-            if (!Timer.Enabled)
+            if (!Timer!.Enabled)
             {
                 Timer.Start();
             }
@@ -153,20 +158,20 @@ namespace Cirrus.Wrappers
         {
             // This "ping" event emulates a keep-alive message to prevent the API from disconnecting
             _log?.Information("Sending ping keep-alive");
-            await Client.EmitAsync("ping");
+            await Client!.EmitAsync("ping");
         }
 
         private void ReleaseUnmanagedResources()
         {
-            Client.Off("subscribed");
-            Client.Off("data");
+            Client!.Off("subscribed");
+            Client!.Off("data");
 
-            Client.OnConnected -= OnInternalConnectEvent;
-            Client.OnDisconnected -= OnInternalDisconnectEvent;
+            Client!.OnConnected -= OnInternalConnectEvent;
+            Client!.OnDisconnected -= OnInternalDisconnectEvent;
             
             // Tell the API we are disconnecting
-            Client.EmitAsync("disconnect").Wait();
-            Client.DisconnectAsync().Wait();
+            Client!.EmitAsync("disconnect").Wait();
+            Client!.DisconnectAsync().Wait();
         }
 
         private void Dispose(bool disposing)
@@ -174,10 +179,10 @@ namespace Cirrus.Wrappers
             ReleaseUnmanagedResources();
             if (disposing)
             {
-                Timer.Elapsed -= KeepConnectionAlive;
+                Timer!.Elapsed -= KeepConnectionAlive;
             
-                Timer.Stop();
-                Timer.Dispose();
+                Timer!.Stop();
+                Timer!.Dispose();
             }
         }
 

@@ -57,7 +57,7 @@ namespace Cirrus
 
     public class Cirrus : ICirrus
     {
-        private ICirrusRestWrapper _restWrapper;
+        private readonly ICirrusRestWrapper _restWrapper;
         private readonly ILogger? _log;
 
         /// <summary>
@@ -132,7 +132,7 @@ namespace Cirrus
         }
 
         /// <inheritdoc />
-        public IAsyncEnumerable<IEnumerable<Device>> FetchDeviceHistory(TimeSpan numberOfDaysToGoBack, [EnumeratorCancellation] CancellationToken token, bool sliceTheListFromTheBeginningOfTheList = false, bool includeToday = true, int limit = 288)
+        public IAsyncEnumerable<IEnumerable<Device>> FetchDeviceHistory(TimeSpan numberOfDaysToGoBack, CancellationToken token, bool sliceTheListFromTheBeginningOfTheList = false, bool includeToday = true, int limit = 288)
         {
             if (numberOfDaysToGoBack.Days <= 0)
                 throw new ArgumentException("Value must be greater than or equal to 1", nameof(numberOfDaysToGoBack));

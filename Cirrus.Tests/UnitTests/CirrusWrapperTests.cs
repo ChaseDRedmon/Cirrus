@@ -27,10 +27,7 @@ namespace Cirrus.Tests.UnitTests
             var mockCirrusWrapper = new Mock<CirrusWrapper>();
             mockCirrusWrapper.Setup(mock => mock.FetchDeviceHistory(1, CancellationToken.None, false, true, 288));
 
-            var cirrusWrapper = new CirrusWrapper();
             
-            
-            Assert.That();
 
 
         }

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Cirrus.Extensions;
 using Cirrus.Models;
 using Cirrus.Wrappers;
 using Microsoft.Extensions.DependencyInjection;
@@ -59,24 +60,6 @@ namespace Cirrus
     {
         private readonly ICirrusRestWrapper _restWrapper;
         private readonly ILogger? _log;
-
-        /// <summary>
-        /// Creates an instance of the <see cref="CirrusWrapper"/> class
-        /// </summary>
-        /// <param name="apiKey">Ambient Weather API Key</param>
-        /// <param name="applicationKey">Ambient Weather Application Key</param>
-        /// <param name="macAddress">Device Mac Address</param>
-        /// <param name="logger">Serilog ILogger instance</param>
-        /// <remarks>
-        /// You must supply non-null, non-whitespace, non-empty strings for the
-        /// <see cref="apiKey"/>, <see cref="applicationKey"/>, and <see cref="macAddress"/>
-        /// parameters when calling any function within the <see cref="CirrusWrapper"/> class.
-        /// The RestWrapper will throw an ArgumentException if these values are null, empty, or whitespace
-        /// </remarks>
-        public CirrusWrapper(string apiKey, string applicationKey, string macAddress, ILogger logger): this(apiKey, applicationKey, macAddress)
-        {
-            _log = logger.ForContext<CirrusWrapper>();
-        }
         
         /// <summary>
         /// Creates an instance of the <see cref="CirrusWrapper"/> class
@@ -90,14 +73,18 @@ namespace Cirrus
         /// parameters when calling any function within the <see cref="CirrusWrapper"/> class.
         /// The RestWrapper will throw an ArgumentException if these values are null, empty, or whitespace
         /// </remarks>
-        public CirrusWrapper(string apiKey, string applicationKey, string macAddress)
+        public static ICirrusWrapper Create(string macAddress, List<string> apiKey, string applicationKey)
         {
             var services = new ServiceCollection();
-            services.AddTransient<ICirrusRestWrapper>(x =>
-                new CirrusRestWrapper(macAddress, apiKey, applicationKey));
+            services.AddCirrusServices(options =>
+            {
+                options.MacAddress = macAddress;
+                options.ApiKey = apiKey;
+                options.ApplicationKey = applicationKey;
+            });
             
             var provider = services.BuildServiceProvider();
-            _restWrapper = provider.GetRequiredService<ICirrusRestWrapper>();
+            return provider.GetRequiredService<ICirrusWrapper>();
         }
         
         /// <summary>

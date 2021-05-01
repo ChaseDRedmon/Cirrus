@@ -4,8 +4,11 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Cirrus.API;
+using Cirrus.Extensions;
 using Cirrus.Helpers;
 using Cirrus.Models;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Serilog;
@@ -98,46 +101,41 @@ namespace Cirrus.Wrappers
 
     public sealed class CirrusRestWrapper : ICirrusRestWrapper
     {
-        private static readonly HttpClient Client = new HttpClient();
-        private static Uri BaseAddress { get; } = new Uri("https://api.ambientweather.net/");
-
         private readonly ILogger? _log;
+        private readonly ICirrusService _service;
 
-        /// <summary>
-        ///     Creates a new <see cref="CirrusRestWrapper" /> and initializes the base address for the Ambient Weather API
-        /// </summary>
-        public CirrusRestWrapper(string macAddress, string apiKey, string applicationKey, ILogger logger): this(macAddress, apiKey, applicationKey)
+        public static ICirrusRestWrapper Create(string macAddress, List<string> apiKey, string applicationKey)
         {
-            _log = logger.ForContext<CirrusRestWrapper>();
-        }
-        
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="macAddress"></param>
-        /// <param name="apiKey"></param>
-        /// <param name="applicationKey"></param>
-        public CirrusRestWrapper(string macAddress, string apiKey, string applicationKey)
-        {
-            MacAddress = macAddress;
-            ApiKey = apiKey;
-            ApplicationKey = applicationKey;
+            var services = new ServiceCollection();
+            
+            // using Cirrus.Extensions;
+            services.AddCirrusServices(options =>
+            {
+                options.MacAddress = macAddress;
+                options.ApiKey = apiKey;
+                options.ApplicationKey = applicationKey;
+            });
+
+            var provider = services.BuildServiceProvider();
+            return provider.GetRequiredService<ICirrusRestWrapper>();
         }
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="options"></param>
+        /// <param name="service"></param>
         /// <param name="logger"></param>
-        public CirrusRestWrapper(IOptions<CirrusConfig> options, ILogger logger)
+        public CirrusRestWrapper(IOptions<CirrusConfig> options, ICirrusService service, ILogger logger)
         {
             MacAddress = options.Value.MacAddress;
             ApiKey = options.Value.ApiKey[0];
             ApplicationKey = options.Value.ApplicationKey;
-            
+
+            _service = service;
             _log = logger.ForContext<CirrusRestWrapper>();
         }
-        
+
         public string MacAddress { get; set; }
         public string ApiKey { get; set; }
         public string ApplicationKey { get; set; }
@@ -177,7 +175,7 @@ namespace Cirrus.Wrappers
             query += $"&limit={limit.ToString()}";
 
             // Query the Ambient Weather API
-            var responseMessage = await QueryAmbientWeatherApiAsync(path, query, cancellationToken);
+            var responseMessage = await _service.QueryAmbientWeatherApiAsync(path, query, cancellationToken);
             var content = await responseMessage.Content.ReadAsStringAsync();
 
             if (content.Length == 2)
@@ -220,8 +218,8 @@ namespace Cirrus.Wrappers
             var query = $"?apiKey={ApiKey}&applicationKey={ApplicationKey}";
 
             // Query the Ambient Weather API
-            var responseMessage = await QueryAmbientWeatherApiAsync(path, query, cancellationToken);
-            var content = await responseMessage.Content.ReadAsStringAsync();
+            var responseMessage = await _service.QueryAmbientWeatherApiAsync(path, query, cancellationToken);
+            var content = await responseMessage.Content.ReadAsStringAsync(cancellationToken);
             
             if (responseMessage.IsSuccessStatusCode)
             {
@@ -238,33 +236,6 @@ namespace Cirrus.Wrappers
 
             // The Ambient Weather API returns HTTP 200 and an empty JSON Array when data does not exist for a given day.
             return json.Length != 2;
-        }
-
-        /// <summary>
-        ///     Submits a request to the Ambient Weather API
-        /// </summary>
-        /// <param name="path">API Path: "v1/devices" || "v1/devices/<see cref="MacAddress"/>"</param>
-        /// <param name="query">API Query</param>
-        /// <param name="cancellationToken"></param>
-        /// <returns><see cref="HttpResponseMessage"/>HTTP Response from the Ambient Weather API</returns>
-        private async Task<HttpResponseMessage> QueryAmbientWeatherApiAsync(string path, string query,
-            CancellationToken cancellationToken)
-        {
-            // Build the full API Uri
-            var builder = new UriBuilder
-            {
-                Scheme = BaseAddress.Scheme,
-                Host = BaseAddress.Host,
-                Path = path,
-                Query = query
-            };
-
-            var request = new HttpRequestMessage(HttpMethod.Get, builder.Uri);
-            request.Headers.TryAddWithoutValidation("Content-Type", "application/json");
-
-            // Get and return a JSON string from the Ambient Weather API
-            var response = await Client.SendAsync(request, HttpCompletionOption.ResponseContentRead, cancellationToken);
-            return response;
         }
     }
 }

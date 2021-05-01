@@ -11,7 +11,7 @@ using Serilog;
 
 namespace Cirrus
 {
-    public interface ICirrus
+    public interface ICirrusWrapper
     {
         /// <summary>
         /// Fetch the device's history between the start date and the end date, relative to the UTC timezone
@@ -55,36 +55,42 @@ namespace Cirrus
         public IAsyncEnumerable<IEnumerable<Device>> FetchDeviceHistory(int numberOfDaysToGoBack, CancellationToken token, bool sliceTheListFromTheBeginningOfTheList = false, bool includeToday = true, int limit = 288);
     }
 
-    public class Cirrus : ICirrus
+    public class CirrusWrapper : ICirrusWrapper
     {
         private readonly ICirrusRestWrapper _restWrapper;
         private readonly ILogger? _log;
 
         /// <summary>
-        /// Creates an instance of the <see cref="Cirrus"/> class
+        /// Creates an instance of the <see cref="CirrusWrapper"/> class
         /// </summary>
-        /// <param name="apiKey"></param>
-        /// <param name="applicationKey"></param>
-        /// <param name="macAddress"></param>
-        /// <param name="logger"></param>
+        /// <param name="apiKey">Ambient Weather API Key</param>
+        /// <param name="applicationKey">Ambient Weather Application Key</param>
+        /// <param name="macAddress">Device Mac Address</param>
+        /// <param name="logger">Serilog ILogger instance</param>
         /// <remarks>
         /// You must supply non-null, non-whitespace, non-empty strings for the
         /// <see cref="apiKey"/>, <see cref="applicationKey"/>, and <see cref="macAddress"/>
-        /// parameters when calling any function within the <see cref="Cirrus"/> class.
+        /// parameters when calling any function within the <see cref="CirrusWrapper"/> class.
         /// The RestWrapper will throw an ArgumentException if these values are null, empty, or whitespace
         /// </remarks>
-        public Cirrus(string apiKey, string applicationKey, string macAddress, ILogger logger): this(apiKey, applicationKey, macAddress)
+        public CirrusWrapper(string apiKey, string applicationKey, string macAddress, ILogger logger): this(apiKey, applicationKey, macAddress)
         {
-            _log = logger.ForContext<Cirrus>();
+            _log = logger.ForContext<CirrusWrapper>();
         }
         
         /// <summary>
-        /// 
+        /// Creates an instance of the <see cref="CirrusWrapper"/> class
         /// </summary>
-        /// <param name="apiKey"></param>
-        /// <param name="applicationKey"></param>
-        /// <param name="macAddress"></param>
-        public Cirrus(string apiKey, string applicationKey, string macAddress)
+        /// <param name="apiKey">Ambient Weather API Key</param>
+        /// <param name="applicationKey">Ambient Weather Application Key</param>
+        /// <param name="macAddress">Device Mac Address</param>
+        /// <remarks>
+        /// You must supply non-null, non-whitespace, non-empty strings for the
+        /// <see cref="apiKey"/>, <see cref="applicationKey"/>, and <see cref="macAddress"/>
+        /// parameters when calling any function within the <see cref="CirrusWrapper"/> class.
+        /// The RestWrapper will throw an ArgumentException if these values are null, empty, or whitespace
+        /// </remarks>
+        public CirrusWrapper(string apiKey, string applicationKey, string macAddress)
         {
             var services = new ServiceCollection();
             services.AddTransient<ICirrusRestWrapper>(x =>
@@ -95,14 +101,14 @@ namespace Cirrus
         }
         
         /// <summary>
-        /// 
+        /// Creates an instance of the <see cref="CirrusWrapper"/> class
         /// </summary>
-        /// <param name="restWrapper"></param>
-        /// <param name="logger"></param>
-        public Cirrus(ICirrusRestWrapper restWrapper, ILogger logger)
+        /// <param name="restWrapper">The ICirrus Rest wrapper instance injected via container</param>
+        /// <param name="logger">Serilog ILogger instance</param>
+        public CirrusWrapper(ICirrusRestWrapper restWrapper, ILogger logger)
         {
             _restWrapper = restWrapper;
-            _log = logger.ForContext<Cirrus>();
+            _log = logger.ForContext<CirrusWrapper>();
         }
 
         /// <inheritdoc />

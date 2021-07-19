@@ -2,21 +2,16 @@
 
 namespace Cirrus.Models
 {
-    public class CirrusConfig
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="MacAddress">Weather Station MAC Address. Found Here: https://ambientweather.net/devices</param>
+    /// <param name="ApiKeys">Ambient Weather API Key. Found Here: https://ambientweather.net/account</param>
+    /// <param name="ApplicationKey">Account Application Key. Found Here: https://ambientweather.net/account</param>
+    public sealed class CirrusConfig
     {
-        /// <summary>
-        /// Weather Station MAC Address. Found Here: https://ambientweather.net/devices
-        /// </summary>
         public string MacAddress { get; set; }
-        
-        /// <summary>
-        /// Ambient Weather API Key. Found Here: https://ambientweather.net/account
-        /// </summary>
-        public List<string> ApiKey { get; set; }
-        
-        /// <summary>
-        /// Account Application Key. Found Here: https://ambientweather.net/account
-        /// </summary>
+        public IReadOnlyList<string> ApiKeys { get; set; }
         public string ApplicationKey { get; set; }
     }
 }

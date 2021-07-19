@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using System.Threading.Tasks;
 using Cirrus.Extensions;
 using Cirrus.Models;
 using Cirrus.Wrappers;
@@ -19,7 +18,6 @@ namespace Cirrus
         /// </summary>
         /// <param name="startDate">
         /// The start date where weather events will start being collected.
-        /// 
         /// </param>
         /// <param name="endDate">
         /// The end date where weather events will stop being collected.
@@ -34,7 +32,7 @@ namespace Cirrus
         /// </param>
         /// <param name="token">Cancellation token</param>
         /// <returns>Returns an <see cref="IAsyncEnumerable{IEnumerable}"/></returns>
-        public IAsyncEnumerable<IEnumerable<Device>> FetchDeviceHistory(DateTimeOffset? startDate, DateTimeOffset? endDate, CancellationToken token, bool sliceTheListFromTheBeginningOfTheList = false, int limit = 288);
+        public IAsyncEnumerable<IEnumerable<Device>> FetchDeviceHistory(DateTimeOffset? startDate, DateTimeOffset? endDate, bool sliceTheListFromTheBeginningOfTheList = false, int limit = 288, CancellationToken token = default);
 
         /// <summary>
         /// Fetch the device's history between now and the number of days specified, relative to UTC
@@ -50,10 +48,10 @@ namespace Cirrus
         /// </param>
         /// <param name="token">Cancellation token</param>
         /// <returns><see cref="IAsyncEnumerable{IEnumerable}"/></returns>
-        public IAsyncEnumerable<IEnumerable<Device>> FetchDeviceHistory(TimeSpan numberOfDaysToGoBack, CancellationToken token, bool sliceTheListFromTheBeginningOfTheList = false, bool includeToday = true, int limit = 288);
+        public IAsyncEnumerable<IEnumerable<Device>> FetchDeviceHistory(TimeSpan numberOfDaysToGoBack, bool sliceTheListFromTheBeginningOfTheList = false, bool includeToday = true, int limit = 288, CancellationToken token = default);
 
         /// <inheritdoc cref="FetchDeviceHistory(TimeSpan, CancellationToken, bool, bool, int)" />
-        public IAsyncEnumerable<IEnumerable<Device>> FetchDeviceHistory(int numberOfDaysToGoBack, CancellationToken token, bool sliceTheListFromTheBeginningOfTheList = false, bool includeToday = true, int limit = 288);
+        public IAsyncEnumerable<IEnumerable<Device>> FetchDeviceHistory(int? numberOfDaysToGoBack, bool sliceTheListFromTheBeginningOfTheList = false, bool includeToday = true, int limit = 288, CancellationToken token = default);
     }
 
     public class CirrusWrapper : ICirrusWrapper
@@ -73,13 +71,13 @@ namespace Cirrus
         /// parameters when calling any function within the <see cref="CirrusWrapper"/> class.
         /// The RestWrapper will throw an ArgumentException if these values are null, empty, or whitespace
         /// </remarks>
-        public static ICirrusWrapper Create(string macAddress, List<string> apiKey, string applicationKey)
+        public static ICirrusWrapper Create(string macAddress, IReadOnlyList<string> apiKey, string applicationKey)
         {
             var services = new ServiceCollection();
             services.AddCirrusServices(options =>
             {
                 options.MacAddress = macAddress;
-                options.ApiKey = apiKey;
+                options.ApiKeys = apiKey;
                 options.ApplicationKey = applicationKey;
             });
             
@@ -92,57 +90,47 @@ namespace Cirrus
         /// </summary>
         /// <param name="restWrapper">The ICirrus Rest wrapper instance injected via container</param>
         /// <param name="logger">Serilog ILogger instance</param>
-        public CirrusWrapper(ICirrusRestWrapper restWrapper, ILogger logger)
+        public CirrusWrapper(ICirrusRestWrapper restWrapper, ILogger? logger = null)
         {
             _restWrapper = restWrapper;
-            _log = logger.ForContext<CirrusWrapper>();
+            _log = logger?.ForContext<CirrusWrapper>();
         }
 
         /// <inheritdoc />
-        public async IAsyncEnumerable<IEnumerable<Device>> FetchDeviceHistory(DateTimeOffset? startDate, DateTimeOffset? endDate, [EnumeratorCancellation] CancellationToken token, bool sliceTheListFromTheBeginningOfTheList = false, int limit = 288)
+        public IAsyncEnumerable<IEnumerable<Device>> FetchDeviceHistory(DateTimeOffset? startDate, DateTimeOffset? endDate, bool sliceTheListFromTheBeginningOfTheList = false, int limit = 288, CancellationToken token = default)
         {
-            _log?.Information($"Fetching device history from: {startDate?.ToUniversalTime().ToString()} to {endDate?.ToUniversalTime().ToString()}");
+            endDate ??= DateTimeOffset.UtcNow;
 
-            var current = startDate;
+            if (endDate < startDate)
+                throw new ArgumentException($"{nameof(endDate)} must be greater than {nameof(startDate)}");
             
-            var queryLimit = limit;
+            var daysBetween = endDate - startDate;
 
-            if (sliceTheListFromTheBeginningOfTheList)
-                limit = 288;
-
-            // Walk the API 1 day at a time until we reach the end date
-            while (current <= endDate)
-            {
-                var result = await _restWrapper.FetchDeviceDataAsync(current, token, limit);
-
-                yield return sliceTheListFromTheBeginningOfTheList ? result.TakeLast(queryLimit) : result;
-
-                current = current?.AddDays(1);
-                
-                // Wait 1.5 seconds before sending the next request, as the API allows 1 request per second
-                await Task.Delay(1500);
-            }
+            return FetchDeviceHistory(daysBetween?.Days, sliceTheListFromTheBeginningOfTheList, true, limit, token);
         }
 
         /// <inheritdoc />
-        public IAsyncEnumerable<IEnumerable<Device>> FetchDeviceHistory(TimeSpan numberOfDaysToGoBack, CancellationToken token, bool sliceTheListFromTheBeginningOfTheList = false, bool includeToday = true, int limit = 288)
+        public IAsyncEnumerable<IEnumerable<Device>> FetchDeviceHistory(TimeSpan numberOfDaysToGoBack, bool sliceTheListFromTheBeginningOfTheList = false, bool includeToday = true, int limit = 288, CancellationToken token = default)
         {
             if (numberOfDaysToGoBack.Days <= 0)
                 throw new ArgumentException("Value must be greater than or equal to 1", nameof(numberOfDaysToGoBack));
 
-            return FetchDeviceHistory(numberOfDaysToGoBack.Days, token, sliceTheListFromTheBeginningOfTheList, includeToday, limit);
+            return FetchDeviceHistory(numberOfDaysToGoBack.Days, sliceTheListFromTheBeginningOfTheList, includeToday, limit, token);
         }
 
         /// <inheritdoc />
-        public async IAsyncEnumerable<IEnumerable<Device>> FetchDeviceHistory(int numberOfDaysToGoBack, [EnumeratorCancellation] CancellationToken token, bool sliceTheListFromTheBeginningOfTheList = false, bool includeToday = true, int limit = 288)
+        public async IAsyncEnumerable<IEnumerable<Device>> FetchDeviceHistory(int? numberOfDaysToGoBack, bool sliceTheListFromTheBeginningOfTheList = false, bool includeToday = true, int limit = 288, [EnumeratorCancellation] CancellationToken token = default)
         {
-            if(numberOfDaysToGoBack <= 0)
+            if (numberOfDaysToGoBack <= 0)
                 throw new ArgumentException("Value must be greater than or equal to 1", nameof(numberOfDaysToGoBack));
+
+            if (limit <= 0)
+                yield return Enumerable.Empty<Device>();
 
             var queryLimit = limit;
 
             /* Ambient weather always places the most recent event as the first element in the list.
-            Older events (from earlier in the day) are at the "bottom" of the list, meaning we use TakeLate to fetch from the start of the day
+            Older events (from earlier in the day) are at the "bottom" of the list, meaning we use TakeLast to fetch from the start of the day
             We need to query the highest amount that we can (which is 288 elements) to fetch the full day, so that we can work from the bottom up
             We don't know how many elements are actually returned until we query */
             if (sliceTheListFromTheBeginningOfTheList)
@@ -150,16 +138,13 @@ namespace Cirrus
             
             var queryDate = includeToday ? DateTime.UtcNow : DateTime.UtcNow.AddDays(-1);
             
-            for (var i = 0; i <= numberOfDaysToGoBack; i++)
+            for (var i = 0; i <= numberOfDaysToGoBack; ++i)
             {
-                var result = await _restWrapper.FetchDeviceDataAsync(queryDate, token, limit);
+                var result = await _restWrapper.FetchDeviceDataAsync(queryDate, limit, token);
 
                 yield return sliceTheListFromTheBeginningOfTheList ? result.TakeLast(queryLimit) : result;
                 
                 queryDate = queryDate.AddDays(-1);
-
-                // Wait 1.5 seconds before sending the next request, as the API allows 1 request per second
-                await Task.Delay(1500);
             }
         }
     }

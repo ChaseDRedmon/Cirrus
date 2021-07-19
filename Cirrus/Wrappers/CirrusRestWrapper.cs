@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Cirrus.API;
@@ -10,7 +10,6 @@ using Cirrus.Helpers;
 using Cirrus.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
 using Serilog;
 
 namespace Cirrus.Wrappers
@@ -45,7 +44,7 @@ namespace Cirrus.Wrappers
         /// <exception cref="ArgumentException">Throws ArgumentException if <see cref="ApiKey"/>,
         /// <see cref="ApplicationKey"/>, or <see cref="MacAddress"/> are null, empty, or whitespace
         /// </exception>
-        Task<IEnumerable<Device>> FetchDeviceDataAsync(DateTimeOffset? endDate, CancellationToken cancellationToken, int limit = 288);
+        Task<IEnumerable<Device>> FetchDeviceDataAsync(DateTimeOffset? endDate, int limit = 288, CancellationToken cancellationToken = default);
 
         /// <summary>
         ///     Fetches a Weather Station's data based on its MAC Address from the Ambient Weather API
@@ -64,7 +63,7 @@ namespace Cirrus.Wrappers
         /// <exception cref="ArgumentException">Throws ArgumentException if <see cref="ApiKey"/>,
         /// <see cref="ApplicationKey"/>, or <see cref="MacAddress"/> are null, empty, or whitespace
         /// </exception>
-        Task<string> FetchDeviceDataAsJsonAsync(DateTimeOffset? endDate, CancellationToken cancellationToken, int limit = 288);
+        Task<string> FetchDeviceDataAsJsonAsync(DateTimeOffset? endDate, int limit = 288, CancellationToken cancellationToken = default);
 
         /// <summary>
         ///     Fetch a list of devices and device metadata associated with the user's account and the most recent weather data for each device
@@ -104,7 +103,7 @@ namespace Cirrus.Wrappers
         private readonly ILogger? _log;
         private readonly ICirrusService _service;
 
-        public static ICirrusRestWrapper Create(string macAddress, List<string> apiKey, string applicationKey)
+        public static ICirrusRestWrapper Initialize(string macAddress, IReadOnlyList<string> apiKey, string applicationKey)
         {
             var services = new ServiceCollection();
             
@@ -112,7 +111,7 @@ namespace Cirrus.Wrappers
             services.AddCirrusServices(options =>
             {
                 options.MacAddress = macAddress;
-                options.ApiKey = apiKey;
+                options.ApiKeys = apiKey;
                 options.ApplicationKey = applicationKey;
             });
 
@@ -121,43 +120,41 @@ namespace Cirrus.Wrappers
         }
 
         /// <summary>
-        /// 
+        /// Class constructor for rest wrapper
         /// </summary>
-        /// <param name="options"></param>
-        /// <param name="service"></param>
-        /// <param name="logger"></param>
-        public CirrusRestWrapper(IOptions<CirrusConfig> options, ICirrusService service, ILogger logger)
+        /// <param name="options">Options containing MacAddress, API Key, and Application key needed for REST Requests</param>
+        /// <param name="service">HTTP Client service</param>
+        /// <param name="logger">Serilog logger</param>
+        public CirrusRestWrapper(IOptions<CirrusConfig> options, ICirrusService service, ILogger? logger = null)
         {
             MacAddress = options.Value.MacAddress;
-            ApiKey = options.Value.ApiKey[0];
+            ApiKey = options.Value.ApiKeys[0];
             ApplicationKey = options.Value.ApplicationKey;
-
+            
             _service = service;
-            _log = logger.ForContext<CirrusRestWrapper>();
+            _log = logger?.ForContext<CirrusRestWrapper>();
         }
 
         public string MacAddress { get; set; }
         public string ApiKey { get; set; }
         public string ApplicationKey { get; set; }
-
-        /// <inheritdoc cref="FetchDeviceDataAsync" />
-        public async Task<IEnumerable<Device>> FetchDeviceDataAsync(DateTimeOffset? endDate, CancellationToken cancellationToken, int limit = 288)
+        
+        public async Task<IEnumerable<Device>> FetchDeviceDataAsync(DateTimeOffset? endDate, int limit = 288, CancellationToken cancellationToken = default)
         {
             if (limit <= 0)
                 return Enumerable.Empty<Device>();
             
             // Fetch the JSON string
-            var json = await FetchDeviceDataAsJsonAsync(endDate, cancellationToken, limit);
-
-            if (string.IsNullOrEmpty(json))
+            var json = await FetchDeviceDataAsJsonAsync(endDate, limit, cancellationToken);
+            
+            if (string.IsNullOrEmpty(json) || json == "[]")
                 return Enumerable.Empty<Device>();
             
-            var data = JsonConvert.DeserializeObject<IEnumerable<Device>>(json);
-            return data!;
+            var data = JsonSerializer.Deserialize<IEnumerable<Device>>(json);
+            return data;
         }
-
-        /// <inheritdoc cref="FetchDeviceDataAsJsonAsync" />
-        public async Task<string> FetchDeviceDataAsJsonAsync(DateTimeOffset? endDate, CancellationToken cancellationToken, int limit = 288)
+        
+        public async Task<string> FetchDeviceDataAsJsonAsync(DateTimeOffset? endDate, int limit = 288, CancellationToken cancellationToken = default)
         {
             // Check to see if all parameters have a non-null, non-blank/whitespace value
             Check.IsNullOrWhitespace(MacAddress);
@@ -165,77 +162,44 @@ namespace Cirrus.Wrappers
             Check.IsNullOrWhitespace(ApplicationKey);
             
             if (limit <= 0)
-                return string.Empty;
+                return string.Empty; 
             
-            // Build our query
-            var path = $"v1/devices/{MacAddress}";
-            var query = $"?apiKey={ApiKey}&applicationKey={ApplicationKey}";
-
-            query += $"&endDate={endDate?.ToUniversalTime().ToUnixTimeMilliseconds().ToString()}";
-            query += $"&limit={limit.ToString()}";
+            // Build our parameters 
+            var query = string.Concat("?apiKey=", ApiKey, "&applicationKey=", ApplicationKey, "&endDate=",
+                endDate?.ToUniversalTime().ToUnixTimeMilliseconds().ToString(), "&limit=", limit.ToString());
 
             // Query the Ambient Weather API
-            var responseMessage = await _service.QueryAmbientWeatherApiAsync(path, query, cancellationToken);
-            var content = await responseMessage.Content.ReadAsStringAsync();
-
-            if (content.Length == 2)
-            {
-                return string.Empty;
-            }
-            
-            if (responseMessage.IsSuccessStatusCode)
-            {
-                return content;
-            }
-            
-            _log?.Error($"Error: Unsuccessful API Response: \n HTTP: {responseMessage.StatusCode} - {content}");
-            return string.Empty;
+            return await _service.SendRequestAsync(query, MacAddress, cancellationToken);
         }
-
-        /// <inheritdoc cref="FetchUserDevicesAsync" />
-        public async Task<IEnumerable<UserDevice>> FetchUserDevicesAsync(CancellationToken cancellationToken)
+        
+        public async Task<IEnumerable<UserDevice>> FetchUserDevicesAsync(CancellationToken cancellationToken = default)
         {
-            // Fetch the JSON string
             var json = await FetchUserDevicesAsJsonAsync(cancellationToken);
-
-            if (string.IsNullOrEmpty(json))
-            {
+            
+            if (string.IsNullOrEmpty(json) || json == "[]")
                 return Enumerable.Empty<UserDevice>();
-            }
-
-            var data = JsonConvert.DeserializeObject<IEnumerable<UserDevice>>(json);
-            return data!;
+            
+            var data = JsonSerializer.Deserialize<IEnumerable<UserDevice>>(json);
+            return data;
         }
-
-        public async Task<string> FetchUserDevicesAsJsonAsync(CancellationToken cancellationToken)
+        
+        public async Task<string> FetchUserDevicesAsJsonAsync(CancellationToken cancellationToken = default)
         {
             // Check to see if all parameters have a non-null, non-blank/whitespace value
             Check.IsNullOrWhitespace(ApiKey);
             Check.IsNullOrWhitespace(ApplicationKey);
 
-            // Build our query
-            const string path = "v1/devices";
-            var query = $"?apiKey={ApiKey}&applicationKey={ApplicationKey}";
-
-            // Query the Ambient Weather API
-            var responseMessage = await _service.QueryAmbientWeatherApiAsync(path, query, cancellationToken);
-            var content = await responseMessage.Content.ReadAsStringAsync(cancellationToken);
-            
-            if (responseMessage.IsSuccessStatusCode)
-            {
-                return content;
-            }
-            
-            _log?.Error($"Error: Unsuccessful API Response: \n HTTP: {responseMessage.StatusCode} - {content}");
-            return string.Empty;
+            var query = string.Concat("?apiKey=", ApiKey, "&applicationKey=", ApplicationKey);
+            return await _service.SendRequestAsync(query, cancellationToken: cancellationToken);
         }
         
-        public async Task<bool> DoesDeviceDataExist(DateTimeOffset? dateToCheck, CancellationToken cancellationToken)
+        public async Task<bool> DoesDeviceDataExist(DateTimeOffset? dateToCheck, CancellationToken cancellationToken = default)
         {
-            var json = await FetchDeviceDataAsJsonAsync(dateToCheck, cancellationToken, 1);
+            // TODO: We really need a better way to handle and communicate faults to the user
+            var json = await FetchDeviceDataAsJsonAsync(dateToCheck, 1, cancellationToken);
 
-            // The Ambient Weather API returns HTTP 200 and an empty JSON Array when data does not exist for a given day.
-            return json.Length != 2;
+            // Ambient weather returns "[]" and HTTP 200 if data does not exist for a given day. 
+            return json != "[]";
         }
     }
 }

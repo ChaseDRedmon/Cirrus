@@ -6,15 +6,19 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Cirrus.Extensions
 {
-    public static class CirrusServices
+    internal static class CirrusServices
     {
-        public static IServiceCollection AddCirrusServices(this IServiceCollection services, Action<CirrusConfig> setupAction)
+        internal static IServiceCollection AddCirrusServices(this IServiceCollection services, Action<CirrusConfig> setupAction)
         {
             services.Configure(setupAction);
-            services.AddTransient<ICirrusService, CirrusService>();
-            services.AddTransient<ICirrusRestWrapper, CirrusRestWrapper>();
-            services.AddTransient<ICirrusWrapper, CirrusWrapper>();
-            
+            services.AddScoped<ICirrusRestWrapper, CirrusRestWrapper>();
+            services.AddScoped<ICirrusWrapper, CirrusWrapper>();
+            services.AddHttpClient<ICirrusService, CirrusService>()
+                .AddPolicyHandler(Policies.GetRetryPolicy())
+                .AddPolicyHandler(Policies.GetCircuitBreakerPolicy())
+                .AddPolicyHandler(Policies.CheckAuthorizedPolicy())
+                .AddHttpMessageHandler(() => new RateLimitHttpMessageHandler(1, TimeSpan.FromSeconds(1)));
+
             return services;
         }
     }

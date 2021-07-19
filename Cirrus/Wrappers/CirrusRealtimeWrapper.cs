@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Timers;
+using Cirrus.Extensions;
 using Cirrus.Models;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json.Linq;
 using Serilog;
 using SocketIOClient;
 
@@ -48,12 +48,13 @@ namespace Cirrus.Wrappers
         public Task Unsubscribe();
     }
 
-    public sealed class CirrusRealtime : ICirrusRealtime, IDisposable
+    public sealed class CirrusRealtime : ICirrusRealtime, IDisposable, IAsyncDisposable
     {
+        private bool _disposed;
         private readonly ILogger? _log;
         
         private SocketIO? Client { get; }
-        private static Uri BaseAddress { get; } = new("https://dash2.ambientweather.net");
+        private Uri BaseAddress { get; } = new("https://dash2.ambientweather.net");
         private Timer? Timer { get; }
         
         private CirrusConfig Options { get; }
@@ -64,9 +65,9 @@ namespace Cirrus.Wrappers
         /// <inheritdoc cref="OnSubscribe"/>
         public event ICirrusRealtime.OnSubcribeHandler OnSubscribe;
 
-        public CirrusRealtime(IOptions<CirrusConfig> options, ILogger logger): this(options)
+        public CirrusRealtime(IOptions<CirrusConfig> options, ILogger? logger = null): this(options)
         {
-            _log = logger.ForContext<CirrusRealtime>();
+            _log = logger?.ForContext<CirrusRealtime>();
         }
         
         public CirrusRealtime(IOptions<CirrusConfig> options)
@@ -94,7 +95,7 @@ namespace Cirrus.Wrappers
 
         public async Task OpenConnection()
         {
-            var apiKeys = Options.ApiKey;
+            var apiKeys = Options.ApiKeys;
             
             Client!.On("subscribed", OnInternalSubscribeEvent);
             Client!.On("data", OnInternalDataEvent);
@@ -102,10 +103,10 @@ namespace Cirrus.Wrappers
             Client!.OnConnected += OnInternalConnectEvent;
             Client!.OnDisconnected += OnInternalDisconnectEvent;
             
-            _log?.Information($"Opening websocket connection: {BaseAddress}");
+            _log?.Information("Opening websocket connection: {BaseAddress}", BaseAddress.AbsolutePath);
             await Client!.ConnectAsync();
             
-            _log?.Information($"Sending Subcribe Command: {BaseAddress}");
+            _log?.Information("Sending Subcribe Command: {BaseAddress}", BaseAddress.AbsolutePath);
             await Client!.EmitAsync("subscribe", apiKeys);
             
             Timer!.Start();
@@ -138,19 +139,19 @@ namespace Cirrus.Wrappers
             }
         }
 
-        private void OnInternalSubscribeEvent(SocketIOResponse obj)
+        private async void OnInternalSubscribeEvent(SocketIOResponse obj)
         {
             _log?.Information("Subscribed to service");
-
-            var x = obj.GetValue().ToObject<UserDevice>();
+            
+            var x = await obj.GetValue().ToObjectAsync<UserDevice>();
             OnSubscribe.Invoke(this, new OnSubscribeEventArgs(x));
         }
 
-        private void OnInternalDataEvent(SocketIOResponse obj)
+        private async void OnInternalDataEvent(SocketIOResponse obj)
         {
             _log?.Information("Received data event");
 
-            var x = obj.GetValue().ToObject<Device>();
+            var x = await obj.GetValue().ToObjectAsync<Device>();
             OnDataReceived.Invoke(this, new OnDataReceivedEventArgs(x));
         }
 
@@ -160,36 +161,86 @@ namespace Cirrus.Wrappers
             _log?.Information("Sending ping keep-alive");
             await Client!.EmitAsync("ping");
         }
+        
+        private async ValueTask ReleaseUnmanagedResourcesAsync()
+        {
+            await ReleaseSocketIOResources();
+            
+            // Tell the API we are disconnecting
+            await Client!.EmitAsync("disconnect");
+            
+            // Disconnect
+            await Client!.DisconnectAsync();
+        }
 
         private void ReleaseUnmanagedResources()
         {
-            Client!.Off("subscribed");
-            Client!.Off("data");
-
-            Client!.OnConnected -= OnInternalConnectEvent;
-            Client!.OnDisconnected -= OnInternalDisconnectEvent;
+            ReleaseSocketIOResources().Wait();
             
             // Tell the API we are disconnecting
             Client!.EmitAsync("disconnect").Wait();
+            
+            // Disconnect
             Client!.DisconnectAsync().Wait();
         }
 
-        private void Dispose(bool disposing)
+        private Task ReleaseSocketIOResources()
         {
-            ReleaseUnmanagedResources();
-            if (disposing)
-            {
-                Timer!.Elapsed -= KeepConnectionAlive;
+            // Unregister our handlers from SocketIO
+            Client!.Off("subscribed");
+            Client!.Off("data");
             
-                Timer!.Stop();
-                Timer!.Dispose();
-            }
+            // Unregister our internal handlers
+            Client!.OnConnected -= OnInternalConnectEvent;
+            Client!.OnDisconnected -= OnInternalDisconnectEvent;
+
+            return Task.CompletedTask;
         }
 
         public void Dispose()
         {
             Dispose(true);
             GC.SuppressFinalize(this);
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            await DisposeAsync(true);
+            GC.SuppressFinalize(this);
+        }
+
+        private void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                // Release managed objects
+                if (disposing)
+                {
+                    Timer?.Close();
+                }
+            
+                // Release unmanaged objects
+                ReleaseUnmanagedResources();
+            }
+            
+            _disposed = true;
+        }
+        
+        private async ValueTask DisposeAsync(bool disposing)
+        {
+            if (!_disposed)
+            {
+                // Release managed objects
+                if (disposing)
+                {
+                    Timer?.Close();
+                }
+            
+                // Release unmanaged objects
+                await ReleaseUnmanagedResourcesAsync();
+            }
+            
+            _disposed = true;
         }
 
         ~CirrusRealtime()

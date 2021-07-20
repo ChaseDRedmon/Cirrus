@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Cirrus.Infrastructure;
 using Serilog;
 
 namespace Cirrus.API
@@ -16,7 +17,7 @@ namespace Cirrus.API
         /// <param name="cancellationToken"></param>
         /// <param name="query"></param>
         /// <returns><see cref="HttpResponseMessage"/>HTTP Response from the Ambient Weather API</returns>
-        Task<string> SendRequestAsync(string query, string? macAddress = default, CancellationToken cancellationToken = default);
+        Task<ServiceResponse<string>> SendRequestAsync(string query, string? macAddress = default, CancellationToken cancellationToken = default);
     }
 
     public sealed class CirrusService : ICirrusService, IDisposable
@@ -32,7 +33,7 @@ namespace Cirrus.API
         }
 
         /// <inheritdoc/>
-        public async Task<string> SendRequestAsync(string query, string? macAddress = default,
+        public async Task<ServiceResponse<string>> SendRequestAsync(string query, string? macAddress = default,
             CancellationToken cancellationToken = default)
         {
             var uri = ConstructUri(macAddress, query);
@@ -41,23 +42,25 @@ namespace Cirrus.API
             
             // Get and return a JSON string from the Ambient Weather API
             using var result = await _httpClient.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            var json = await result.Content.ReadAsStringAsync(cancellationToken);
+            
+            _log?.Debug("Returned status code: {StatusCode}", result.StatusCode);
+            _log?.Verbose("JSON String: \n{JsonResult}", json);
             
             switch (result.StatusCode)
             {
+                // Ambient weather returns "[]" and HTTP 200 if data does not exist for a given day. 
+                case HttpStatusCode.OK when json.Equals("[]"):
+                    return ServiceResponse.EmptyResponse<string>();
                 case HttpStatusCode.OK:
-                    return await result.Content.ReadAsStringAsync(cancellationToken);
+                    return ServiceResponse.Ok(json); 
                 case HttpStatusCode.Unauthorized:
-                    _log?.Warning("Unauthorized credentials");
-                    return string.Empty;
+                    return ServiceResponse.Fail<string>("Unauthorized credentials");
                 case HttpStatusCode.TooManyRequests:
-                    _log?.Warning("Too many requests made within one (1) second");
-                    return string.Empty;
-                default:
-                    _log?.Error("Error: Unsuccessful API Response: \n HTTP: {StatusCode} - {Content}", result.StatusCode, result.Content.ReadAsStringAsync(cancellationToken));
-                    break;
+                    return ServiceResponse.Fail<string>("Too many requests made within one (1) second");
             }
             
-            return string.Empty;
+            return ServiceResponse.Fail<string>($"HTTP: {result.StatusCode.ToString()} - {json}");
         }
         
         private Uri ConstructUri(string? macAddress, string query)
@@ -79,6 +82,9 @@ namespace Cirrus.API
                 Query = query
             };
 
+            _log?.Debug("Scheme: {Scheme}\nHost: {Host}\nPath: {Path}\nQuery: {Query}\nFull Uri: {Uri}", 
+                builder.Scheme, builder.Host, builder.Path, builder.Query, builder.Uri);
+            
             return builder.Uri;
         }
 

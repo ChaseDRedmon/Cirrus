@@ -54,7 +54,7 @@ namespace Cirrus
         public IAsyncEnumerable<IEnumerable<Device>> FetchDeviceHistory(int? numberOfDaysToGoBack, bool sliceTheListFromTheBeginningOfTheList = false, bool includeToday = true, int limit = 288, CancellationToken token = default);
     }
 
-    public class CirrusWrapper : ICirrusWrapper
+    public sealed class CirrusWrapper : ICirrusWrapper
     {
         private readonly ICirrusRestWrapper _restWrapper;
         private readonly ILogger? _log;

@@ -31,7 +31,7 @@ namespace Cirrus.Extensions
         {
             return Policy
                 .HandleResult<HttpResponseMessage>(x => x.StatusCode == HttpStatusCode.Unauthorized)
-                .CircuitBreakerAsync(0, TimeSpan.FromMinutes(1));
+                .CircuitBreakerAsync(1, TimeSpan.FromMinutes(1));
         }
     }
 }

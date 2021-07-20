@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Cirrus.Extensions
 {
-    public class RateLimitHttpMessageHandler : DelegatingHandler
+    public sealed class RateLimitHttpMessageHandler : DelegatingHandler
     {
         private readonly List<DateTimeOffset> _callLog = new();
         private readonly TimeSpan _limitTime;

@@ -249,7 +249,7 @@ namespace Cirrus.Wrappers
         }
     }
     
-    public class OnDataReceivedEventArgs
+    public sealed class OnDataReceivedEventArgs
     {
         public OnDataReceivedEventArgs(Device device)
         {
@@ -259,7 +259,7 @@ namespace Cirrus.Wrappers
         public Device Device { get; }
     }
     
-    public class OnSubscribeEventArgs
+    public sealed class OnSubscribeEventArgs
     {
         public OnSubscribeEventArgs(UserDevice userDevice)
         {

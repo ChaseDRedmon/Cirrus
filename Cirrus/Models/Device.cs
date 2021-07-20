@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Cirrus.Models
 {
-    public record Device
+    public sealed record Device
     {
         // These fields below are fields that I have personally retrieved from my Ambient Weather Station (WS-2902A/B)
         

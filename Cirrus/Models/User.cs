@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Cirrus.Models
 {
-    public record Geo
+    public sealed record Geo
     {
         /// <summary>
         /// The Type of Geo Coordinates. i.e. "Point"
@@ -20,7 +20,7 @@ namespace Cirrus.Models
         public IReadOnlyList<double>? Coordinates { get; init; }
     }
     
-    public record Coords2
+    public sealed record Coords2
     {
         /// <summary>
         /// Latitude of the weather station
@@ -35,7 +35,7 @@ namespace Cirrus.Models
         public double Longitude { get; init; }
     }
     
-    public record Coords
+    public sealed record Coords
     {
         /// <summary>
         /// Geographic coordinates of the weather station
@@ -68,7 +68,7 @@ namespace Cirrus.Models
     }
     
     // Root myDeserializedClass = JsonSerializer.Deserialize<UserDevice>(myJsonResponse);
-    public record Info
+    public sealed record Info
     {
         /// <summary>
         /// The name of the weather station configured in the AmbientWeather dashboard
@@ -83,7 +83,7 @@ namespace Cirrus.Models
         public Coords? Coords { get; init; }
     }
 
-    public record UserDevice
+    public sealed record UserDevice
     {
         /// <summary>
         /// Weather Station Mac Address
@@ -110,7 +110,7 @@ namespace Cirrus.Models
         public string? ApiKey { get; init; }
     }
     
-    public record Root
+    public sealed record Root
     {
         /// <summary>
         /// List of devices belonging to the user

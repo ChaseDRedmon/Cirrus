@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Threading;
@@ -17,7 +18,9 @@ namespace Cirrus.API
         /// <param name="cancellationToken"></param>
         /// <param name="query"></param>
         /// <returns><see cref="HttpResponseMessage"/>HTTP Response from the Ambient Weather API</returns>
-        Task<ServiceResponse<string>> SendRequestAsync(string query, string? macAddress = default, CancellationToken cancellationToken = default);
+        public Task<ServiceResponse<string>> SendRequestAsync(string query, string? macAddress = default, CancellationToken cancellationToken = default);
+
+        internal Task<MemoryStream> Test(string query, string? macAddress = default, CancellationToken cancellationToken = default);
     }
 
     public sealed class CirrusService : ICirrusService, IDisposable
@@ -36,33 +39,50 @@ namespace Cirrus.API
         public async Task<ServiceResponse<string>> SendRequestAsync(string query, string? macAddress = default,
             CancellationToken cancellationToken = default)
         {
+            
+            
+            _log?.Debug("Returned status code: {StatusCode}", result.StatusCode);
+            _log?.Verbose("JSON String: \n{JsonResult}", json);
+            
+            
+            
+            return ServiceResponse.Fail<string>($"HTTP: {result.StatusCode.ToString()} - {json}");
+        }
+
+        async Task<MemoryStream> ICirrusService.Test(string query, string? macAddress = default,
+            CancellationToken cancellationToken = default)
+        {
+            var x = await (Fetch());
+            
+            x.Value.
+        }
+
+        private async Task<ServiceResponse<MemoryStream>> Fetch(string query, string? macAddress = default,
+            CancellationToken cancellationToken = default)
+        {
             var uri = ConstructUri(macAddress, query);
             
             _httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Content-Type", "application/json");
             
             // Get and return a JSON string from the Ambient Weather API
             using var result = await _httpClient.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-            var json = await result.Content.ReadAsStringAsync(cancellationToken);
-            
-            _log?.Debug("Returned status code: {StatusCode}", result.StatusCode);
-            _log?.Verbose("JSON String: \n{JsonResult}", json);
+            var statusCode = result.StatusCode;            
             
             switch (result.StatusCode)
             {
-                // Ambient weather returns "[]" and HTTP 200 if data does not exist for a given day. 
-                case HttpStatusCode.OK when json.Equals("[]"):
-                    return ServiceResponse.EmptyResponse<string>();
                 case HttpStatusCode.OK:
-                    return ServiceResponse.Ok(json); 
+                    var mstream = new MemoryStream();
+                    await result.Content.CopyToAsync(mstream, cancellationToken);
+                    return ServiceResponse.Ok(mstream);
                 case HttpStatusCode.Unauthorized:
-                    return ServiceResponse.Fail<string>("Unauthorized credentials");
+                    return ServiceResponse.Fail<MemoryStream>("Unauthorized credentials");
                 case HttpStatusCode.TooManyRequests:
-                    return ServiceResponse.Fail<string>("Too many requests made within one (1) second");
+                    return ServiceResponse.Fail<MemoryStream>("Too many requests made within one (1) second");
             }
-            
-            return ServiceResponse.Fail<string>($"HTTP: {result.StatusCode.ToString()} - {json}");
+
+            return ServiceResponse.Fail<MemoryStream>("Unhandled HTTP Status Code");
         }
-        
+
         private Uri ConstructUri(string? macAddress, string query)
         { 
             var baseAddress = new Uri("https://api.ambientweather.net/");

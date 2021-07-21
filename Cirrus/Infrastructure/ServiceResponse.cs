@@ -85,7 +85,7 @@ namespace Cirrus.Infrastructure
 
         public static ServiceResponse<T> EmptyResponse<T>()
         {
-            return new(default, true, true,string.Empty);
+            return new(default, true, true, string.Empty);
         }
 
         public Task GetAction(Func<Task> onSuccessAction, Func<Task> onFailAction)

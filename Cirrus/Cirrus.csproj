@@ -33,7 +33,7 @@ Added JSON Extensions to facilitate deserialization of events from Realtime Wrap
       <PackageReference Include="Microsoft.Extensions.Options" Version="5.0.0" />
       <PackageReference Include="Polly.Contrib.WaitAndRetry" Version="1.1.1" />
       <PackageReference Include="Serilog" Version="2.10.0" />
-      <PackageReference Include="SocketIOClient" Version="2.2.4" />
+      <PackageReference Include="SocketIOClient" Version="2.3.1" />
       <PackageReference Include="System.Text.Json" Version="5.0.2" />
     </ItemGroup>
 

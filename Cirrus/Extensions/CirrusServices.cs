@@ -6,14 +6,19 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Cirrus.Extensions
 {
-    internal static class CirrusServices
+    public static class CirrusServices
     {
-        internal static IServiceCollection AddCirrusServices(this IServiceCollection services, Action<CirrusConfig> setupAction)
+        public static IServiceCollection AddCirrusServices(this IServiceCollection services, Action<CirrusConfig> setupAction)
         {
             services.Configure(setupAction);
             services.AddScoped<ICirrusRestWrapper, CirrusRestWrapper>();
             services.AddScoped<ICirrusWrapper, CirrusWrapper>();
-            services.AddHttpClient<ICirrusService, CirrusService>()
+            services
+                .AddHttpClient<ICirrusService, CirrusService>("CirrusService", client =>
+                {
+                    client.DefaultRequestHeaders.TryAddWithoutValidation("Content-Type", "application/json");
+                })
+                .AddPolicyHandler(Policies.GetTooManyRequestsPolicy())
                 .AddPolicyHandler(Policies.GetRetryPolicy())
                 .AddPolicyHandler(Policies.GetCircuitBreakerPolicy())
                 .AddPolicyHandler(Policies.CheckAuthorizedPolicy())

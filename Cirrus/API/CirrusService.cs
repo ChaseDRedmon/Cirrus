@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Cirrus.Infrastructure;
+using Cirrus.Models;
 using Serilog;
 
 namespace Cirrus.API
@@ -14,13 +17,21 @@ namespace Cirrus.API
         /// <summary>
         ///     Submits a request to the Ambient Weather API
         /// </summary>
-        /// <param name="macAddress"></param>
-        /// <param name="cancellationToken"></param>
-        /// <param name="query"></param>
-        /// <returns><see cref="HttpResponseMessage"/>HTTP Response from the Ambient Weather API</returns>
-        public Task<ServiceResponse<string>> SendRequestAsync(string query, string? macAddress = default, CancellationToken cancellationToken = default);
-
-        internal Task<MemoryStream> Test(string query, string? macAddress = default, CancellationToken cancellationToken = default);
+        /// <param name="query"> Ambient Weather API query </param>
+        /// <param name="macAddress">The weather station MAC Address</param>
+        /// <param name="cancellationToken">The cancellation token</param>
+        /// <returns> A deserialized JSON <see cref="IReadOnlyCollection{T?}"/> response from the Ambient Weather API</returns>
+        public Task<ServiceResponse<IEnumerable<Device>>> Fetch(string query, string? macAddress = default,
+            CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        ///     Submits a request to the Ambient Weather API
+        /// </summary>
+        /// <param name="macAddress">The weather station MAC Address</param>
+        /// <param name="query"> Ambient Weather API query </param>
+        /// <param name="cancellationToken">The cancellation token</param>
+        /// <returns> JSON <see cref="String"/> from the Ambient Weather API</returns>
+        ///public Task<ServiceResponse<string>> Fetch(string query, string? macAddress = default, CancellationToken cancellationToken = default);
     }
 
     public sealed class CirrusService : ICirrusService, IDisposable
@@ -31,58 +42,60 @@ namespace Cirrus.API
 
         public CirrusService(HttpClient httpClient, ILogger? log = null)
         {
-            _httpClient = httpClient;
+            _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
             _log = log;
         }
-
-        /// <inheritdoc/>
-        public async Task<ServiceResponse<string>> SendRequestAsync(string query, string? macAddress = default,
+        
+        public async Task<ServiceResponse<IEnumerable<Device>>> Fetch(string query, string? macAddress = default,
             CancellationToken cancellationToken = default)
         {
+            var serviceResponse = await FetchCore(query, macAddress, cancellationToken);
+            if (serviceResponse.Failure)
+                return ServiceResponse.Fail<IEnumerable<Device>?>(serviceResponse.ErrorMessage);
             
-            
-            _log?.Debug("Returned status code: {StatusCode}", result.StatusCode);
-            _log?.Verbose("JSON String: \n{JsonResult}", json);
-            
-            
-            
-            return ServiceResponse.Fail<string>($"HTTP: {result.StatusCode.ToString()} - {json}");
+            //await using var stream = serviceResponse.Value;
+            //var model = await JsonSerializer.DeserializeAsync<IEnumerable<T>>(stream, cancellationToken: cancellationToken);
+            return ServiceResponse.Ok(serviceResponse.Value);
         }
+        
+        /*public async Task<ServiceResponse<string>> Fetch(string query, string? macAddress = default, CancellationToken cancellationToken = default)
+        {
+            var serviceResponse = await FetchCore(query, macAddress, cancellationToken);
 
-        async Task<MemoryStream> ICirrusService.Test(string query, string? macAddress = default,
+            if (serviceResponse.Failure)
+                return ServiceResponse.Fail<string>(serviceResponse.ErrorMessage);
+
+            await using var stream = serviceResponse.Value;
+            using var reader = new StreamReader(stream);
+            var result = await reader.ReadToEndAsync();
+            
+            return ServiceResponse.Ok(result);
+        }*/
+
+        private async Task<ServiceResponse<IEnumerable<Device>>> FetchCore(string query, string? macAddress = default,
             CancellationToken cancellationToken = default)
         {
-            var x = await (Fetch());
+            var path = ConstructUri(macAddress, query);
             
-            x.Value.
+            // Get and return a JSON stream from the Ambient Weather API
+            using var result = await _httpClient.GetAsync(path, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+            var stream = await result.Content.ReadAsStreamAsync(cancellationToken);
+
+            var streamReader = new StreamReader(stream);
+            var jsonResponse = await streamReader.ReadToEndAsync();
+            
+            Log.Information(jsonResponse);
+
+            var desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+            await using var writer = new StreamWriter(Path.Combine(desktopPath, "A.json"));
+            await writer.WriteAsync(jsonResponse);
+            writer.Close();
+            
+            var model = await JsonSerializer.DeserializeAsync<IEnumerable<Device>>(stream, cancellationToken: cancellationToken);
+            
+            return ServiceResponse.Ok(model);
         }
-
-        private async Task<ServiceResponse<MemoryStream>> Fetch(string query, string? macAddress = default,
-            CancellationToken cancellationToken = default)
-        {
-            var uri = ConstructUri(macAddress, query);
-            
-            _httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Content-Type", "application/json");
-            
-            // Get and return a JSON string from the Ambient Weather API
-            using var result = await _httpClient.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-            var statusCode = result.StatusCode;            
-            
-            switch (result.StatusCode)
-            {
-                case HttpStatusCode.OK:
-                    var mstream = new MemoryStream();
-                    await result.Content.CopyToAsync(mstream, cancellationToken);
-                    return ServiceResponse.Ok(mstream);
-                case HttpStatusCode.Unauthorized:
-                    return ServiceResponse.Fail<MemoryStream>("Unauthorized credentials");
-                case HttpStatusCode.TooManyRequests:
-                    return ServiceResponse.Fail<MemoryStream>("Too many requests made within one (1) second");
-            }
-
-            return ServiceResponse.Fail<MemoryStream>("Unhandled HTTP Status Code");
-        }
-
+        
         private Uri ConstructUri(string? macAddress, string query)
         { 
             var baseAddress = new Uri("https://api.ambientweather.net/");

@@ -241,7 +241,7 @@ namespace Cirrus.Models
         /// <see cref="BatteryLowIndicator1"/>
         /// </summary>
         [JsonPropertyName("batt_co2")]
-        public string? CO2SensorBatteryLowIndicator { get; init; }
+        public int CO2SensorBatteryLowIndicator { get; init; }
         
         /// <summary>
         /// Latest Outdoor PM 2.5 Air Quality

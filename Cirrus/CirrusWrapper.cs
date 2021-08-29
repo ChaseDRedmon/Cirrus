@@ -71,7 +71,7 @@ namespace Cirrus
         /// parameters when calling any function within the <see cref="CirrusWrapper"/> class.
         /// The RestWrapper will throw an ArgumentException if these values are null, empty, or whitespace
         /// </remarks>
-        public static ICirrusWrapper Create(string macAddress, IReadOnlyList<string> apiKey, string applicationKey)
+        public static ICirrusWrapper Create(string macAddress, List<string> apiKey, string applicationKey)
         {
             var services = new ServiceCollection();
             services.AddCirrusServices(options =>

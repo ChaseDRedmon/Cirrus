@@ -33,7 +33,7 @@ namespace Cirrus.Tests.IntegrationTests
             ApplicationKey = config.GetValue<string>(nameof(Credentials.ApplicationKey));
         }
 
-        [Test]
+        /*[Test]
         public async Task Invalid_Ambient_Weather_Date_Query_Should_Return_False()
         {
             // Arrange
@@ -60,6 +60,6 @@ namespace Cirrus.Tests.IntegrationTests
 
             Assert.ThrowsAsync<ArgumentException>(async () =>
                 await sut2.DoesDeviceDataExist(invalidDateTime, CancellationToken.None));
-        }
+        }*/
     }
 }

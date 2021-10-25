@@ -1,6 +1,6 @@
 # Cirrus - A REST/SocketIO Wrapper for Ambient Weather
 
-Cirrus is a small library for wrapping the Ambient Weather API endpoints.
+Cirrus is a small library for wrapping the Ambient Weather API endpoints - Both REST endpoints: Device Data and User Devices; and, the Socket.IO endpoint
 
 ## Features
 * Methods to retrieve strongly typed objects or raw JSON strings from the Ambient Weather service.

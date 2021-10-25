@@ -1,134 +1,134 @@
 ﻿using System.Collections.Generic;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace Cirrus.Models
 {
-    public class Geo
+    public sealed record Geo
     {
         /// <summary>
         /// The Type of Geo Coordinates. i.e. "Point"
         /// </summary>
-        [JsonProperty("type")]
-        public string? Type { get; set; }
+        [JsonPropertyName("type")]
+        public string? Type { get; init; }
         
         /// <summary>
         /// A list of doubles containing the lat/lon coordinates
         /// coordinates[0] is longitude
         /// coordinates[1] is latitude
         /// </summary>
-        [JsonProperty("coordinates")]
-        public List<double>? Coordinates { get; set; }
+        [JsonPropertyName("coordinates")]
+        public IReadOnlyList<double>? Coordinates { get; init; }
     }
     
-    public class Coords2
+    public sealed record Coords2
     {
         /// <summary>
         /// Latitude of the weather station
         /// </summary>
-        [JsonProperty("lat")]
-        public double Latitude { get; set; }
+        [JsonPropertyName("lat")]
+        public double Latitude { get; init; }
         
         /// <summary>
         /// Longitude of the weather station
         /// </summary>
-        [JsonProperty("lon")]
-        public double Longitude { get; set; }
+        [JsonPropertyName("lon")]
+        public double Longitude { get; init; }
     }
     
-    public class Coords
+    public sealed record Coords
     {
         /// <summary>
         /// Geographic coordinates of the weather station
         /// </summary>
-        public Coords2? Coord2 { get; set; }
+        public Coords2? Coord2 { get; init; }
         
         /// <summary>
         /// Address
         /// </summary>
-        [JsonProperty("address")]
-        public string? Address { get; set; }
+        [JsonPropertyName("address")]
+        public string? Address { get; init; }
         
         /// <summary>
         /// City
         /// </summary>
-        [JsonProperty("location")]
-        public string? Location { get; set; }
+        [JsonPropertyName("location")]
+        public string? Location { get; init; }
         
         /// <summary>
         /// Elevation above sea-level in meters
         /// </summary>
-        [JsonProperty("elevation")]
-        public double? Elevation { get; set; }
+        [JsonPropertyName("elevation")]
+        public double? Elevation { get; init; }
         
         /// <summary>
         /// Geographic coordinates of the station
         /// </summary>
-        [JsonProperty("geo")]
-        public Geo? Geo { get; set; }
+        [JsonPropertyName("geo")]
+        public Geo? Geo { get; init; }
     }
     
     // Root myDeserializedClass = JsonSerializer.Deserialize<UserDevice>(myJsonResponse);
-    public class Info
+    public sealed record Info
     {
         /// <summary>
         /// The name of the weather station configured in the AmbientWeather dashboard
         /// </summary>
-        [JsonProperty("name")]
-        public string? Name { get; set; } 
+        [JsonPropertyName("name")]
+        public string? Name { get; init; } 
 
         /// <summary>
         /// City Location
         /// </summary>
-        [JsonProperty("coords")]
-        public Coords? Coords { get; set; }
+        [JsonPropertyName("coords")]
+        public Coords? Coords { get; init; }
     }
 
-    public class UserDevice
+    public sealed record UserDevice
     {
         /// <summary>
         /// Weather Station Mac Address
         /// </summary>
-        [JsonProperty("macAddress")]
-        public string? MacAddress { get; set; } 
+        [JsonPropertyName("macAddress")]
+        public string? MacAddress { get; init; } 
 
         /// <summary>
         /// Instance of <see cref="Info"/> class
         /// </summary>
-        [JsonProperty("info")]
-        public Info? Info { get; set; } 
+        [JsonPropertyName("info")]
+        public Info? Info { get; init; } 
 
         /// <summary>
         /// Instance of <see cref="Device"/> class
         /// </summary>
-        [JsonProperty("lastData")]
-        public Device? LastData { get; set; } 
+        [JsonPropertyName("lastData")]
+        public Device? LastData { get; init; } 
         
         /// <summary>
         /// The API Key used for the subcribe command
         /// </summary>
-        [JsonProperty("apiKey")]
-        public string? ApiKey { get; set; }
+        [JsonPropertyName("apiKey")]
+        public string? ApiKey { get; init; }
     }
     
-    public class Root
+    public sealed record Root
     {
         /// <summary>
         /// List of devices belonging to the user
         /// </summary>
-        [JsonProperty("devices")]
-        public List<UserDevice>? Devices { get; set; }
+        [JsonPropertyName("devices")]
+        public IReadOnlyList<UserDevice>? Devices { get; init; }
         
         /// <summary>
         /// List of invalid API keys
         /// After sending the 'unsubscribe' command, ambient weather returns a list of invalid API keys
         /// </summary>4
-        [JsonProperty("invalidApiKeys")]
-        public List<string>? InvalidAPIKeys { get; set; }
+        [JsonPropertyName("invalidApiKeys")]
+        public IReadOnlyList<string>? InvalidAPIKeys { get; init; }
         
         /// <summary>
         /// The returned event type
         /// </summary>
-        [JsonProperty("method")]
-        public string? Method { get; set; }
+        [JsonPropertyName("method")]
+        public string? Method { get; init; }
     }
 }

@@ -2,7 +2,7 @@ using NUnit.Framework;
 
 namespace Cirrus.Tests.UnitTests
 {
-    public class Tests
+    public class RestTests
     {
         [SetUp]
         public void Setup()

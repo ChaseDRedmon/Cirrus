@@ -31,19 +31,15 @@ namespace Cirrus.Tests.IntegrationTests
             Device = config.GetValue<string>(nameof(Credentials.MacAddress));
             ApiKey = config.GetValue<string>(nameof(Credentials.ApiKey));
             ApplicationKey = config.GetValue<string>(nameof(Credentials.ApplicationKey));
-
-            sut = new CirrusRestWrapper(null, ApiKey, ApplicationKey);
-            sut1 = new CirrusRestWrapper(Device, null, ApplicationKey);
-            sut2 = new CirrusRestWrapper(Device, ApiKey, null);
         }
 
-        [Test]
+        /*[Test]
         public async Task Invalid_Ambient_Weather_Date_Query_Should_Return_False()
         {
             // Arrange
             var invalidDateTime = new DateTimeOffset(2019, 1, 1, 0, 0, 0, TimeSpan.Zero); // This is a known date where there is no information available
 
-            var sut = new CirrusRestWrapper(Device, ApiKey, ApplicationKey);
+            
             
             // Act
             var result = await sut.DoesDeviceDataExist(invalidDateTime, CancellationToken.None);
@@ -64,6 +60,6 @@ namespace Cirrus.Tests.IntegrationTests
 
             Assert.ThrowsAsync<ArgumentException>(async () =>
                 await sut2.DoesDeviceDataExist(invalidDateTime, CancellationToken.None));
-        }
+        }*/
     }
 }

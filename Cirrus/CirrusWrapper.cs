@@ -7,11 +7,12 @@ using Cirrus.Extensions;
 using Cirrus.Models;
 using Cirrus.Wrappers;
 using Microsoft.Extensions.DependencyInjection;
-using Serilog;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Cirrus
 {
-    public interface ICirrusWrapper
+    public interface ICirrusWrapper : IDisposable
     {
         /// <summary>
         /// Fetch the device's history between the start date and the end date, relative to the UTC timezone
@@ -32,6 +33,7 @@ namespace Cirrus
         /// </param>
         /// <param name="token">Cancellation token</param>
         /// <returns>Returns an <see cref="IAsyncEnumerable{IEnumerable}"/></returns>
+        /// <exception cref="ArgumentException">When <see cref="endDate"/> is less than <see cref="startDate"/></exception>
         public IAsyncEnumerable<IEnumerable<Device>> FetchDeviceHistory(DateTimeOffset? startDate, DateTimeOffset? endDate, bool sliceTheListFromTheBeginningOfTheList = false, int limit = 288, CancellationToken token = default);
 
         /// <summary>
@@ -48,16 +50,17 @@ namespace Cirrus
         /// </param>
         /// <param name="token">Cancellation token</param>
         /// <returns><see cref="IAsyncEnumerable{IEnumerable}"/></returns>
+        /// <exception cref="ArgumentException">When the number of <see cref="numberOfDaysToGoBack"/>.Days is less than or equal to 0</exception>
         public IAsyncEnumerable<IEnumerable<Device>> FetchDeviceHistory(TimeSpan numberOfDaysToGoBack, bool sliceTheListFromTheBeginningOfTheList = false, bool includeToday = true, int limit = 288, CancellationToken token = default);
 
-        /// <inheritdoc cref="FetchDeviceHistory(TimeSpan, CancellationToken, bool, bool, int)" />
+        /// <inheritdoc cref="FetchDeviceHistory(TimeSpan, bool, bool, int, CancellationToken)" />
         public IAsyncEnumerable<IEnumerable<Device>> FetchDeviceHistory(int? numberOfDaysToGoBack, bool sliceTheListFromTheBeginningOfTheList = false, bool includeToday = true, int limit = 288, CancellationToken token = default);
     }
 
     public sealed class CirrusWrapper : ICirrusWrapper
     {
         private readonly ICirrusRestWrapper _restWrapper;
-        private readonly ILogger? _log;
+        private readonly ILogger<CirrusWrapper>? _log;
         
         /// <summary>
         /// Creates an instance of the <see cref="CirrusWrapper"/> class
@@ -89,16 +92,19 @@ namespace Cirrus
         /// Creates an instance of the <see cref="CirrusWrapper"/> class
         /// </summary>
         /// <param name="restWrapper">The ICirrus Rest wrapper instance injected via container</param>
-        /// <param name="logger">Serilog ILogger instance</param>
-        public CirrusWrapper(ICirrusRestWrapper restWrapper, ILogger? logger = null)
+        /// <param name="logger">MEL ILogger instance</param>
+        public CirrusWrapper(ICirrusRestWrapper restWrapper, ILogger<CirrusWrapper>? logger = null)
         {
             _restWrapper = restWrapper;
-            _log = logger?.ForContext<CirrusWrapper>();
+            _log = logger ?? NullLogger<CirrusWrapper>.Instance;
         }
 
         /// <inheritdoc />
         public IAsyncEnumerable<IEnumerable<Device>> FetchDeviceHistory(DateTimeOffset? startDate, DateTimeOffset? endDate, bool sliceTheListFromTheBeginningOfTheList = false, int limit = 288, CancellationToken token = default)
         {
+            _log.LogTrace("Fetching device history");
+            _log.LogDebug("Start Date: {StartDate}, End Date: {EndDate}, Slice: {SliceList}, Limit: {Limit}", startDate, endDate, sliceTheListFromTheBeginningOfTheList, limit);
+            
             endDate ??= DateTimeOffset.UtcNow;
 
             if (endDate < startDate)
@@ -112,6 +118,9 @@ namespace Cirrus
         /// <inheritdoc />
         public IAsyncEnumerable<IEnumerable<Device>> FetchDeviceHistory(TimeSpan numberOfDaysToGoBack, bool sliceTheListFromTheBeginningOfTheList = false, bool includeToday = true, int limit = 288, CancellationToken token = default)
         {
+            _log.LogTrace("Fetching device history");
+            _log.LogDebug("Days: {Days}, Slice: {Slice}, Include Today?: {Include}, Limit: {Limit}", numberOfDaysToGoBack, sliceTheListFromTheBeginningOfTheList, includeToday, limit);
+            
             if (numberOfDaysToGoBack.Days <= 0)
                 throw new ArgumentException("Value must be greater than or equal to 1", nameof(numberOfDaysToGoBack));
 
@@ -121,6 +130,9 @@ namespace Cirrus
         /// <inheritdoc />
         public async IAsyncEnumerable<IEnumerable<Device>> FetchDeviceHistory(int? numberOfDaysToGoBack, bool sliceTheListFromTheBeginningOfTheList = false, bool includeToday = true, int limit = 288, [EnumeratorCancellation] CancellationToken token = default)
         {
+            _log.LogTrace("Fetching device history");
+            _log.LogDebug("Days: {Days}, Slice: {Slice}, Include Today?: {Include}, Limit: {Limit}", numberOfDaysToGoBack, sliceTheListFromTheBeginningOfTheList, includeToday, limit);
+            
             if (numberOfDaysToGoBack <= 0)
                 throw new ArgumentException("Value must be greater than or equal to 1", nameof(numberOfDaysToGoBack));
 
@@ -136,7 +148,7 @@ namespace Cirrus
             if (sliceTheListFromTheBeginningOfTheList)
                 limit = 288;
             
-            var queryDate = includeToday ? DateTime.UtcNow : DateTime.UtcNow.AddDays(-1);
+            var queryDate = includeToday ? DateTimeOffset.UtcNow : DateTimeOffset.UtcNow.AddDays(-1);
             
             for (var i = 0; i <= numberOfDaysToGoBack; ++i)
             {
@@ -146,6 +158,11 @@ namespace Cirrus
                 
                 queryDate = queryDate.AddDays(-1);
             }
+        }
+
+        public void Dispose()
+        {
+            _restWrapper.Dispose();
         }
     }
 }

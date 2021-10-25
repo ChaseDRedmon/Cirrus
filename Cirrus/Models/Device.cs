@@ -234,7 +234,7 @@ namespace Cirrus.Models
         /// Carbon Dioxide measured in Parts Per Million
         /// </summary>
         [JsonPropertyName("co2")]
-        public double? CO2PPM { get; init; } 
+        public double? CO2PartsPerMillion { get; init; } 
         
         /// <summary>
         /// A battery indicator for the CO2 Sensor

@@ -1,67 +1,26 @@
-﻿// From: https://sebnilsson.com/blog/api-rate-limit-http-handler-with-httpclientfactory/
-
-using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using ComposableAsync;
+using RateLimiter;
 
 namespace Cirrus.Extensions
 {
-    public sealed class RateLimitHttpMessageHandler : DelegatingHandler
+    public sealed class Limiter : DelegatingHandler
     {
-        private readonly List<DateTimeOffset> _callLog = new();
-        private readonly TimeSpan _limitTime;
-        private readonly int _limitCount;
-
-        public RateLimitHttpMessageHandler(int limitCount, TimeSpan limitTime)
+        private readonly TimeLimiter _constraint;
+        
+        public Limiter()
         {
-            _limitCount = limitCount;
-            _limitTime = limitTime;
+            // 1.5 seconds to prevent retries from happening too often
+            _constraint = TimeLimiter.GetFromMaxCountByInterval(1, TimeSpan.FromSeconds(1.5));
         }
 
-        protected override async Task<HttpResponseMessage> SendAsync(
-            HttpRequestMessage request,
-            CancellationToken cancellationToken)
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            var now = DateTimeOffset.UtcNow;
-
-            lock (_callLog)
-            {
-                _callLog.Add(now);
-
-                while (_callLog.Count > _limitCount)
-                    _callLog.RemoveAt(0);
-            }
-
-            await LimitDelay(now);
-
+            await _constraint;
             return await base.SendAsync(request, cancellationToken);
-        }
-
-        private async Task LimitDelay(DateTimeOffset now)
-        {
-            if (_callLog.Count < _limitCount)
-                return;
-
-            var limit = now.Add(-_limitTime);
-
-            var lastCall = DateTimeOffset.MinValue;
-            var shouldLock = false;
-
-            lock (_callLog)
-            {
-                lastCall = _callLog.FirstOrDefault();
-                shouldLock = _callLog.Count(x => x >= limit) >= _limitCount;
-            }
-
-            var delayTime = shouldLock && (lastCall > DateTimeOffset.MinValue)
-                ? (limit - lastCall)
-                : TimeSpan.Zero;
-
-            if (delayTime > TimeSpan.Zero)
-                await Task.Delay(delayTime);
         }
     }
 }

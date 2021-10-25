@@ -9,7 +9,7 @@ namespace Cirrus.Extensions
     // From: https://github.com/dotnet/runtime/issues/31274#issuecomment-804360901
     public static class JsonExtensions
     {
-        public static async Task<T> ToObjectAsync<T>(this JsonElement element, JsonSerializerOptions options = null,
+        public static async Task<T?> ToObjectAsync<T>(this JsonElement element, JsonSerializerOptions? options = null,
             CancellationToken token = default)
         {
             var bufferWriter = new ArrayBufferWriter<byte>();
@@ -22,11 +22,10 @@ namespace Cirrus.Extensions
             return JsonSerializer.Deserialize<T>(bufferWriter.WrittenSpan, options);
         }
 
-        public static async Task<T> ToObjectAsync<T>(this JsonDocument document, JsonSerializerOptions options = null,
+        public static async Task<T?> ToObjectAsync<T>(this JsonDocument document, JsonSerializerOptions? options = null,
             CancellationToken token = default)
         {
             if (document == null) throw new ArgumentNullException(nameof(document), "JsonDocument cannot be null");
-
             return await document.RootElement.ToObjectAsync<T>(options, token: token);
         }
     }

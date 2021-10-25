@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Threading.Tasks;
-using static System.String;
 
 namespace Cirrus.Infrastructure
 {
@@ -30,9 +29,9 @@ namespace Cirrus.Infrastructure
         {
             switch (success)
             {
-                case true when !IsNullOrWhiteSpace(errorMessage):
+                case true when !string.IsNullOrWhiteSpace(errorMessage):
                     throw new ArgumentException("Cannot be successful with error message");
-                case false when IsNullOrWhiteSpace(errorMessage):
+                case false when string.IsNullOrWhiteSpace(errorMessage):
                     throw new ArgumentException("Cannot be failure with no error message");
                 default:
                     Success = success;
@@ -49,7 +48,7 @@ namespace Cirrus.Infrastructure
         /// <returns></returns>
         public static ServiceResponse Fail(string message)
         {
-            return new(false, true, message);
+            return new ServiceResponse(false, true, message);
         }
         
         /// <summary>
@@ -60,7 +59,7 @@ namespace Cirrus.Infrastructure
         /// <returns></returns>
         public static ServiceResponse<T> Fail<T>(string message)
         {
-            return new(default, false, true, message);
+            return new ServiceResponse<T>(default, false, true, message);
         }
         
         /// <summary>
@@ -69,7 +68,7 @@ namespace Cirrus.Infrastructure
         /// <returns></returns>
         public static ServiceResponse Ok()
         {
-            return new(true, true, string.Empty);
+            return new ServiceResponse(true, true, string.Empty);
         }
     
         /// <summary>
@@ -80,12 +79,12 @@ namespace Cirrus.Infrastructure
         /// <returns>Returns a new <see cref="ServiceResponse{T}"/></returns>
         public static ServiceResponse<T> Ok<T>(T value)
         {
-            return new(value, true, false, string.Empty);
+            return new ServiceResponse<T>(value, true, false, string.Empty);
         }
 
         public static ServiceResponse<T> EmptyResponse<T>()
         {
-            return new(default, true, true, string.Empty);
+            return new ServiceResponse<T>(default, true, true, string.Empty);
         }
 
         public Task GetAction(Func<Task> onSuccessAction, Func<Task> onFailAction)

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Net;
 using System.Net.Http;
-using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using Polly;
 using Polly.Contrib.WaitAndRetry;
 using Polly.Extensions.Http;
@@ -22,10 +22,15 @@ namespace Cirrus.Extensions
         {
             var delay = Backoff.DecorrelatedJitterBackoffV2(medianFirstRetryDelay: TimeSpan.FromSeconds(1),
                 retryCount: 5);
-            
+
             return Policy
                 .HandleResult<HttpResponseMessage>(msg => msg.StatusCode == HttpStatusCode.TooManyRequests)
-                .WaitAndRetryAsync(delay);
+                .WaitAndRetryAsync(
+                    delay, 
+                    onRetry: (outcome, timespan, retryAttempt, context) =>
+                    {
+                        context.GetLogger()?.LogWarning("Too many requests submitted within 1 second; retrying in {Timespan}ms for the {RetryAttempt} time", timespan.TotalMilliseconds, retryAttempt);
+                    });
         }
         
         /// <summary>
@@ -37,10 +42,15 @@ namespace Cirrus.Extensions
         {
             var delay = Backoff.DecorrelatedJitterBackoffV2(medianFirstRetryDelay: TimeSpan.FromSeconds(1),
                 retryCount: 6);
-            
+
             return HttpPolicyExtensions
                 .HandleTransientHttpError()
-                .WaitAndRetryAsync(delay);
+                .WaitAndRetryAsync(
+                    delay, 
+                    onRetry: (outcome, timespan, retryAttempt, context) =>
+                    {
+                        context.GetLogger()?.LogWarning("Delaying for {Delay}ms, then making retry {Retry}", timespan.TotalMilliseconds, retryAttempt);
+                    });
         }
         
         /// <summary>
@@ -55,7 +65,18 @@ namespace Cirrus.Extensions
         {
             return HttpPolicyExtensions
                 .HandleTransientHttpError()
-                .CircuitBreakerAsync(6, TimeSpan.FromMinutes(1));
+                .CircuitBreakerAsync(6,
+                    onBreak: (outcome, state, timespan, context) =>
+                    {
+                        context.GetLogger()?.LogWarning("Too many transient HTTP errors have occured; we are pausing for {Delay} seconds", timespan.Seconds);
+                    },
+                    onReset: context =>
+                    {
+                        context.GetLogger()?.LogInformation("Resetting the circuit breaker");
+                    },
+                    durationOfBreak: TimeSpan.FromMinutes(1), 
+                    onHalfOpen: () => { }
+                );
         }
         
         /// <summary>
@@ -69,7 +90,18 @@ namespace Cirrus.Extensions
         {
             return Policy
                 .HandleResult<HttpResponseMessage>(x => x.StatusCode == HttpStatusCode.Unauthorized)
-                .CircuitBreakerAsync(1, TimeSpan.FromMinutes(1));
+                .CircuitBreakerAsync(1, 
+                    onBreak: (outcome, state, timespan, context) =>
+                    {
+                        context.GetLogger()?.LogWarning("Invalid API or Application Key; circuit breaker open for {Timespan} seconds", timespan.Seconds);
+                    },
+                    onReset: context =>
+                    {
+                        context.GetLogger()?.LogInformation("Resetting the circuit breaker");
+                    },
+                    durationOfBreak: TimeSpan.FromMinutes(1), 
+                    onHalfOpen: () => { }
+                );
         }
     }
 }

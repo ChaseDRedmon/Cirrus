@@ -4,19 +4,20 @@ using System.Threading.Tasks;
 using System.Timers;
 using Cirrus.Extensions;
 using Cirrus.Models;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
-using Serilog;
 using SocketIOClient;
 
 namespace Cirrus.Wrappers
 {
-    public interface ICirrusRealtime
+    public interface ICirrusRealtime : IDisposable, IAsyncDisposable
     {
         /// <summary>
         /// Handler for our OnDataReceived event
         /// </summary>
         /// <param name="sender"></param>
-        /// <param name="token">Hands a <see cref="JToken"/>> from the websocket</param>
+        /// <param name="token">Hands a <see cref="JToken"/> from the websocket</param>
         public delegate void OnDataReceivedHandler(object sender, OnDataReceivedEventArgs token);
         
         /// <summary>
@@ -42,20 +43,31 @@ namespace Cirrus.Wrappers
         public Task OpenConnection();
         
         /// <summary>
-        /// Unsubscribes from the ambient weather service
+        /// Unsubscribes from the Ambient Weather Service and closes the SocketIO connection
+        /// </summary>
+        /// <returns></returns>
+        public Task CloseConnection();
+
+        /// <summary>
+        /// Subscribes to the Ambient Weather Service
+        /// </summary>
+        /// <returns></returns>
+        public Task Subscribe();
+        
+        /// <summary>
+        /// Unsubscribes from the Ambient Weather Service
         /// This is useful for retrieving a list of invalid API keys, without closing the websocket connection or destroying this instance.
         /// </summary>
         public Task Unsubscribe();
     }
 
-    public sealed class CirrusRealtime : ICirrusRealtime, IDisposable, IAsyncDisposable
+    public sealed class CirrusRealtime : ICirrusRealtime
     {
         private bool _disposed;
-        private readonly ILogger? _log;
+        private readonly ILogger<CirrusRealtime> _log;
         
         private SocketIO? Client { get; }
         private Uri BaseAddress { get; } = new("https://dash2.ambientweather.net");
-        private Timer? Timer { get; }
         
         private CirrusConfig Options { get; }
         
@@ -64,21 +76,17 @@ namespace Cirrus.Wrappers
         
         /// <inheritdoc cref="OnSubscribe"/>
         public event ICirrusRealtime.OnSubcribeHandler OnSubscribe;
-
-        public CirrusRealtime(IOptions<CirrusConfig> options, ILogger? logger = null): this(options)
-        {
-            _log = logger?.ForContext<CirrusRealtime>();
-        }
         
-        public CirrusRealtime(IOptions<CirrusConfig> options)
+        public CirrusRealtime(IOptions<CirrusConfig> options, ILogger<CirrusRealtime>? logger = null)
         {
+            _log = logger ?? NullLogger<CirrusRealtime>.Instance;
+            
             Options = options.Value;
             
             var applicationKey = Options.ApplicationKey;
             
             Client = new SocketIO(BaseAddress, new SocketIOOptions
             {
-                EIO = 4,
                 Query = new Dictionary<string, string>
                 {
                     {"api", "1"},
@@ -88,9 +96,6 @@ namespace Cirrus.Wrappers
                 ReconnectionDelay = 5000, // reconnect after 5 seconds
                 ReconnectionDelayMax = 30000
             });
-            
-            Timer = new Timer { Interval = 10000 };
-            Timer.Elapsed += KeepConnectionAlive;
         }
 
         public async Task OpenConnection()
@@ -103,62 +108,70 @@ namespace Cirrus.Wrappers
             Client!.OnConnected += OnInternalConnectEvent;
             Client!.OnDisconnected += OnInternalDisconnectEvent;
             
-            _log?.Information("Opening websocket connection: {BaseAddress}", BaseAddress.AbsolutePath);
+            _log.LogInformation("Opening websocket connection: {BaseAddress}", BaseAddress.AbsolutePath);
             await Client!.ConnectAsync();
             
-            _log?.Information("Sending Subcribe Command: {BaseAddress}", BaseAddress.AbsolutePath);
+            _log.LogInformation("Sending Subcribe Command: {BaseAddress}", BaseAddress.AbsolutePath);
             await Client!.EmitAsync("subscribe", apiKeys);
-            
-            Timer!.Start();
+        }
 
-            await Task.Delay(-1);
+        public async Task CloseConnection()
+        {
+            await Client!.EmitAsync("unsubscribe");
+            await Client!.EmitAsync("disconnect");
+            await Client!.DisconnectAsync();
+        }
+
+        public async Task Subscribe()
+        {
+            if (Client is not null)
+            {
+                var apiKeys = Options.ApiKeys;
+                
+                _log.LogInformation("Sending Subcribe Command: {BaseAddress}", BaseAddress.AbsolutePath);
+                await Client!.EmitAsync("subscribe", apiKeys);
+            }
         }
 
         public async Task Unsubscribe()
         {
             if (Client is not null)
             {
-                _log?.Information("Unsubscribing from the ambient weather websocket service");
+                _log.LogInformation("Unsubscribing from the ambient weather websocket service");
                 await Client.EmitAsync("unsubscribe");
             }
         }
 
         private void OnInternalDisconnectEvent(object sender, string e)
         {
-            _log?.Information("API Disconnected");
-            Timer!.Stop();
+            _log.LogInformation("API Disconnected");
         }
 
         private void OnInternalConnectEvent(object sender, EventArgs e)
         {
-            _log?.Information("Connected to API");
-
-            if (!Timer!.Enabled)
-            {
-                Timer.Start();
-            }
+            _log.LogInformation("Connected to API");
         }
 
         private async void OnInternalSubscribeEvent(SocketIOResponse obj)
         {
-            _log?.Information("Subscribed to service");
+            _log.LogInformation("Subscribed to service");
             
-            var x = await obj.GetValue().ToObjectAsync<UserDevice>();
-            OnSubscribe.Invoke(this, new OnSubscribeEventArgs(x));
+            var userDevice = await obj.GetValue().ToObjectAsync<UserDevice>();
+            OnSubscribe.Invoke(this, new OnSubscribeEventArgs(userDevice));
         }
 
         private async void OnInternalDataEvent(SocketIOResponse obj)
         {
-            _log?.Information("Received data event");
+            _log.LogInformation("Received data event");
 
-            var x = await obj.GetValue().ToObjectAsync<Device>();
-            OnDataReceived.Invoke(this, new OnDataReceivedEventArgs(x));
+            var device = await obj.GetValue().ToObjectAsync<Device>();
+            OnDataReceived.Invoke(this, new OnDataReceivedEventArgs(device));
         }
 
         private async void KeepConnectionAlive(object source, ElapsedEventArgs e)
         {
             // This "ping" event emulates a keep-alive message to prevent the API from disconnecting
-            _log?.Information("Sending ping keep-alive");
+            _log.LogInformation("Sending ping keep-alive");
             await Client!.EmitAsync("ping");
         }
         
@@ -173,15 +186,15 @@ namespace Cirrus.Wrappers
             await Client!.DisconnectAsync();
         }
 
-        private void ReleaseUnmanagedResources()
+        private async void ReleaseUnmanagedResources()
         {
-            ReleaseSocketIOResources().Wait();
+            await ReleaseSocketIOResources();
             
             // Tell the API we are disconnecting
-            Client!.EmitAsync("disconnect").Wait();
+            await Client!.EmitAsync("disconnect");
             
             // Disconnect
-            Client!.DisconnectAsync().Wait();
+            await Client!.DisconnectAsync();
         }
 
         private Task ReleaseSocketIOResources()
@@ -216,7 +229,7 @@ namespace Cirrus.Wrappers
                 // Release managed objects
                 if (disposing)
                 {
-                    Timer?.Close();
+                    // Dispose of managed resources
                 }
             
                 // Release unmanaged objects
@@ -233,7 +246,7 @@ namespace Cirrus.Wrappers
                 // Release managed objects
                 if (disposing)
                 {
-                    Timer?.Close();
+                    // Dispose of managed resources
                 }
             
                 // Release unmanaged objects
@@ -249,23 +262,6 @@ namespace Cirrus.Wrappers
         }
     }
     
-    public sealed class OnDataReceivedEventArgs
-    {
-        public OnDataReceivedEventArgs(Device device)
-        {
-            Device = device;
-        }
-        
-        public Device Device { get; }
-    }
-    
-    public sealed class OnSubscribeEventArgs
-    {
-        public OnSubscribeEventArgs(UserDevice userDevice)
-        {
-            UserDevice = userDevice;
-        }
-        
-        public UserDevice UserDevice { get; }
-    }
+    public sealed record OnDataReceivedEventArgs(Device Device);
+    public sealed record OnSubscribeEventArgs(UserDevice UserDevice);
 }

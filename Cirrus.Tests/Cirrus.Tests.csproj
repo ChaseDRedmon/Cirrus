@@ -6,6 +6,8 @@
         <IsPackable>false</IsPackable>
 
         <RootNamespace>Cirrus.Tests</RootNamespace>
+
+        <LangVersion>9</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>

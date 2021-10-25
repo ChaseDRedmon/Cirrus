@@ -1,9 +1,9 @@
 using System;
 using System.Threading;
 using Cirrus.Wrappers;
+using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
-using Serilog;
 
 namespace Cirrus.Tests.UnitTests
 {

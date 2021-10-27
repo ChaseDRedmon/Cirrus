@@ -81,10 +81,13 @@ namespace Cirrus.Wrappers
         {
             _log = logger ?? NullLogger<CirrusRealtime>.Instance;
             
+            _log.LogDebug("Creating Realtime Class");
             Options = options.Value;
             
+            _log.LogDebug("Options: {@Options}", Options);
             var applicationKey = Options.ApplicationKey;
             
+            _log.LogDebug("Uri: {Uri}", BaseAddress);
             Client = new SocketIO(BaseAddress, new SocketIOOptions
             {
                 Query = new Dictionary<string, string>
@@ -100,23 +103,32 @@ namespace Cirrus.Wrappers
 
         public async Task OpenConnection()
         {
-            var apiKeys = Options.ApiKeys;
+            _log.LogInformation("Opening connection to WebSocket Endpoint");
             
+            var apiKeys = Options.ApiKeys;
+            _log.LogDebug("ApiKeys: {Keys}", apiKeys);
+            
+            _log.LogDebug("Creating events");
             Client!.On("subscribed", OnInternalSubscribeEvent);
             Client!.On("data", OnInternalDataEvent);
-
+            
+            _log.LogDebug("Subscribing event handlers");
             Client!.OnConnected += OnInternalConnectEvent;
             Client!.OnDisconnected += OnInternalDisconnectEvent;
             
-            _log.LogInformation("Opening websocket connection: {BaseAddress}", BaseAddress.AbsolutePath);
+            _log.LogInformation("Opening websocket connection: {BaseAddress}", BaseAddress.AbsoluteUri);
             await Client!.ConnectAsync();
             
-            _log.LogInformation("Sending Subcribe Command: {BaseAddress}", BaseAddress.AbsolutePath);
+            await Client!.EmitAsync("connect"); 
+            
+            _log.LogInformation("Sending Subcribe Command: {BaseAddress}", BaseAddress.AbsoluteUri);
             await Client!.EmitAsync("subscribe", apiKeys);
         }
 
         public async Task CloseConnection()
         {
+            _log.LogInformation("Closing connection to WebSocket endpoint");
+            
             await Client!.EmitAsync("unsubscribe");
             await Client!.EmitAsync("disconnect");
             await Client!.DisconnectAsync();
@@ -124,22 +136,23 @@ namespace Cirrus.Wrappers
 
         public async Task Subscribe()
         {
-            if (Client is not null)
-            {
-                var apiKeys = Options.ApiKeys;
-                
-                _log.LogInformation("Sending Subcribe Command: {BaseAddress}", BaseAddress.AbsolutePath);
-                await Client!.EmitAsync("subscribe", apiKeys);
-            }
+            if (Client is null)
+                return;
+            
+            _log.LogInformation("Subscribing to WebSocket service");
+            _log.LogInformation("Sending Subcribe Command: {BaseAddress}", BaseAddress.AbsolutePath);
+            var apiKeys = Options.ApiKeys;
+            await Client!.EmitAsync("subscribe", apiKeys);
         }
 
         public async Task Unsubscribe()
         {
-            if (Client is not null)
-            {
-                _log.LogInformation("Unsubscribing from the ambient weather websocket service");
-                await Client.EmitAsync("unsubscribe");
-            }
+            if (Client is null)
+                return;
+            
+            _log.LogInformation("Unsubscribing from WebSocket service");
+            _log.LogInformation("Unsubscribing from the ambient weather websocket service");
+            await Client.EmitAsync("unsubscribe");
         }
 
         private void OnInternalDisconnectEvent(object sender, string e)
@@ -155,6 +168,7 @@ namespace Cirrus.Wrappers
         private async void OnInternalSubscribeEvent(SocketIOResponse obj)
         {
             _log.LogInformation("Subscribed to service");
+            _log.LogDebug("Object: {Obj}", obj.GetValue());
             
             var userDevice = await obj.GetValue().ToObjectAsync<UserDevice>();
             OnSubscribe.Invoke(this, new OnSubscribeEventArgs(userDevice));
@@ -163,6 +177,7 @@ namespace Cirrus.Wrappers
         private async void OnInternalDataEvent(SocketIOResponse obj)
         {
             _log.LogInformation("Received data event");
+            _log.LogDebug("Object: {Obj}", obj.GetValue());
 
             var device = await obj.GetValue().ToObjectAsync<Device>();
             OnDataReceived.Invoke(this, new OnDataReceivedEventArgs(device));

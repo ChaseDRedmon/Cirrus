@@ -35,7 +35,7 @@ Renamed parmeters in Device Model.</PackageReleaseNotes>
       <PackageReference Include="Microsoft.Extensions.Options" Version="5.0.0" />
       <PackageReference Include="Polly.Contrib.WaitAndRetry" Version="1.1.1" />
       <PackageReference Include="RateLimiter" Version="2.2.0" />
-      <PackageReference Include="SocketIOClient" Version="3.0.3" />
+      <PackageReference Include="SocketIOClient" Version="3.0.2" />
       <PackageReference Include="System.Text.Json" Version="5.0.2" />
     </ItemGroup>
 </Project>

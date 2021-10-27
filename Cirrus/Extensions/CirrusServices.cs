@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using Cirrus.API;
 using Cirrus.Models;
 using Cirrus.Wrappers;
@@ -23,6 +24,7 @@ namespace Cirrus.Extensions
                 .Configure(setupAction)
                 .AddTransient<LoggingContext>()
                 .AddScoped<Limiter>()
+                .AddScoped<ICirrusRealtime, CirrusRealtime>()
                 .AddScoped<ICirrusRestWrapper, CirrusRestWrapper>()
                 .AddScoped<ICirrusWrapper, CirrusWrapper>()
                 .AddPolicyRegistry(policyRegistry);
@@ -35,7 +37,7 @@ namespace Cirrus.Extensions
                 })
                 .AddHttpMessageHandler<LoggingContext>()
                 .AddHttpMessageHandler<Limiter>()
-                .SetHandlerLifetime(TimeSpan.FromMinutes(2))
+                .SetHandlerLifetime(Timeout.InfiniteTimeSpan)
                 .AddPolicyHandlerFromRegistry(nameof(Policies.GetRetryPolicy))
                 .AddPolicyHandlerFromRegistry(nameof(Policies.CheckAuthorizedPolicy))
                 .AddPolicyHandlerFromRegistry(nameof(Policies.GetCircuitBreakerPolicy))

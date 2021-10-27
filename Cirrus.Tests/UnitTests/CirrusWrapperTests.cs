@@ -27,7 +27,6 @@ namespace Cirrus.Tests.UnitTests
             var mockCirrusWrapper = new Mock<CirrusWrapper>();
             mockCirrusWrapper.Setup(mock => mock.FetchDeviceHistory(1, false, true, 288, CancellationToken.None));
 
-            
 
 
         }
@@ -36,6 +35,11 @@ namespace Cirrus.Tests.UnitTests
         public void Test1()
         {
             Assert.Pass();
+        }
+        
+        [TearDown]
+        public void Teardown()
+        {
         }
     }
 }

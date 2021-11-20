@@ -24,7 +24,7 @@ namespace Cirrus.Tests.UnitTests
             _cirrusRestWrapperMock = new Mock<ICirrusRestWrapper>();
             _loggerMock = new Mock<ILogger>();
 
-            var mockCirrusWrapper = new Mock<CirrusWrapper>();
+            var mockCirrusWrapper = new Mock<ICirrusWrapper>();
             mockCirrusWrapper.Setup(mock => mock.FetchDeviceHistory(1, false, true, 288, CancellationToken.None));
 
             

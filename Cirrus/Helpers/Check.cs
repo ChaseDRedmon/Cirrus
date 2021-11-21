@@ -41,5 +41,11 @@ namespace Cirrus.Helpers
             var result = strings.All(string.IsNullOrWhiteSpace);
             if (result) throw new ArgumentException("Value cannot be null or whitespace", nameof(strings));
         }
+
+        internal static void IsNullOrWhitespace(string? val, string paramName)
+        {
+            if (string.IsNullOrWhiteSpace(val))
+                throw new ArgumentException("Value cannot by null or whitespace.", paramName);
+        }
     }
 }

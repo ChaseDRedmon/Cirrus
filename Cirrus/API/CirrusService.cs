@@ -13,7 +13,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 namespace Cirrus.API
 {
     /// <summary>
-    /// 
+    /// Cirrus HTTP Client Service for sending REST Requests to the Ambient Weather Server
     /// </summary>
     public interface ICirrusService : IDisposable
     {
@@ -65,8 +65,13 @@ namespace Cirrus.API
         public async Task<ServiceResponse<IEnumerable<T>?>> Fetch<T>(string query, string? macAddress = default, CancellationToken cancellationToken = default)
             where T : class, new()
         {
-            var jsonResult = await FetchFromMemory(query, macAddress, cancellationToken);
-            var model = JsonSerializer.Deserialize<IEnumerable<T>>(jsonResult.Span, new JsonSerializerOptions
+            // var jsonResult = await FetchFromMemory(query, macAddress, cancellationToken);
+            var path = ConstructUri(macAddress, query);
+            var request = new HttpRequestMessage(HttpMethod.Get, path);
+
+            using var responseMessage = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            await using var stream = await responseMessage.Content.ReadAsStreamAsync(cancellationToken);
+            var model = JsonSerializer.Deserialize<IEnumerable<T>>(stream, new JsonSerializerOptions
             {
                 NumberHandling = JsonNumberHandling.AllowReadingFromString
             });
@@ -77,14 +82,23 @@ namespace Cirrus.API
         /// <inheritdoc />
         public async Task<ServiceResponse<string>> Fetch(string query, string? macAddress = default, CancellationToken cancellationToken = default)
         {
-            var jsonResult = await FetchFromMemory(query, macAddress, cancellationToken);
-            return ServiceResponse.Ok(jsonResult.ToString());
+            // var jsonResult = await FetchFromMemory(query, macAddress, cancellationToken);
+            var path = ConstructUri(macAddress, query);
+            var request = new HttpRequestMessage(HttpMethod.Get, path);
+
+            using var responseMessage = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            await using var stream = await responseMessage.Content.ReadAsStreamAsync(cancellationToken);
+            using var reader = new StreamReader(stream);
+            var jsonResult = await reader.ReadToEndAsync();
+            return ServiceResponse.Ok(jsonResult);
         }
 
         /// <inheritdoc />
         /// I might play with this a bit more in the future
-        private async Task<Memory<char>> FetchFromMemory(string query, string? macAddress = default, CancellationToken cancellationToken = default)
+        /*private async Task<Memory<char>> FetchFromMemory(string query, string? macAddress = default, CancellationToken cancellationToken = default)
         {
+            // Hmm, something with this code is broken and I'm not entirely sure what it is. 
+            // It doesn't seem to contain the full json response because when deserialization happens, Json Serializer throws an exception saying theres no JSON tokens
             var path = ConstructUri(macAddress, query);
             var request = new HttpRequestMessage(HttpMethod.Get, path);
 
@@ -96,7 +110,7 @@ namespace Cirrus.API
             await reader.ReadBlockAsync(memory, cancellationToken);
 
             return memory;
-        }
+        }*/
 
         private string ConstructUri(string? macAddress, string query)
         {

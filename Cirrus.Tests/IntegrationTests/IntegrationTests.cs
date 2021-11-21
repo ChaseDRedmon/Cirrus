@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
 using Cirrus.Tests.Models;
 using Cirrus.Wrappers;
 using Microsoft.Extensions.Configuration;

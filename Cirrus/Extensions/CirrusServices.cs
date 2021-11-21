@@ -10,6 +10,12 @@ namespace Cirrus.Extensions
 {
     public static class CirrusServices
     {
+        /// <summary>
+        /// Adds all internal services required by the Cirrus library
+        /// </summary>
+        /// <param name="services">Service collection.</param>
+        /// <param name="setupAction">Cirrus configuration class for API Keys, MacAddresses, and Application Key</param>
+        /// <returns>Service Collection.</returns>
         public static IServiceCollection AddCirrusServices(this IServiceCollection services, Action<CirrusConfig> setupAction)
         {
             var policyRegistry = new PolicyRegistry

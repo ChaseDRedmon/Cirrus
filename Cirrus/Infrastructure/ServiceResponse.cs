@@ -6,22 +6,22 @@ namespace Cirrus.Infrastructure
     public class ServiceResponse
     {
         /// <summary>
-        /// Success status code for a successful operation
+        /// Gets a value indicating whether the service operation succeeded
         /// </summary>
         public bool Success { get; }
-        
+
         /// <summary>
-        /// Error message from a failed operation
+        /// Gets error message from a failed operation
         /// </summary>
         public string ErrorMessage { get; }
-        
+
         /// <summary>
-        /// Failed status code
+        /// Gets a value indicating whether service operation failed
         /// </summary>
         public bool Failure => !Success;
-        
+
         /// <summary>
-        /// Do we have a value?
+        /// Gets a value indicating whether we have a value?
         /// </summary>
         public bool IsEmpty { get; }
 
@@ -40,43 +40,43 @@ namespace Cirrus.Infrastructure
                     break;
             }
         }
-        
+
         /// <summary>
-        /// 
+        /// Represents a failure from the service
         /// </summary>
-        /// <param name="message"></param>
-        /// <returns></returns>
+        /// <param name="message">The failure message.</param>
+        /// <returns>Returns a new <see cref="ServiceResponse"/>.</returns>
         public static ServiceResponse Fail(string message)
         {
             return new ServiceResponse(false, true, message);
         }
-        
+
         /// <summary>
-        /// 
+        /// Represents a failure from the service
         /// </summary>
-        /// <param name="message"></param>
-        /// <typeparam name="T"></typeparam>
-        /// <returns></returns>
+        /// <param name="message">The failure message.</param>
+        /// <typeparam name="T">The return type.</typeparam>
+        /// <returns>Returns a new <see cref="ServiceResponse{T}"/>.</returns>
         public static ServiceResponse<T> Fail<T>(string message)
         {
             return new ServiceResponse<T>(default, false, true, message);
         }
-        
+
         /// <summary>
-        /// 
+        /// Represents a successful service operation
         /// </summary>
-        /// <returns></returns>
+        /// <returns>Returns a new <see cref="ServiceResponse"/>.</returns>
         public static ServiceResponse Ok()
         {
             return new ServiceResponse(true, true, string.Empty);
         }
-    
+
         /// <summary>
         /// Shows a successful service operation
         /// </summary>
-        /// <param name="value"></param>
-        /// <typeparam name="T"></typeparam>
-        /// <returns>Returns a new <see cref="ServiceResponse{T}"/></returns>
+        /// <param name="value">The type to return</param>
+        /// <typeparam name="T">The return type.</typeparam>
+        /// <returns>Returns a new <see cref="ServiceResponse{T}"/>.</returns>
         public static ServiceResponse<T> Ok<T>(T value)
         {
             return new ServiceResponse<T>(value, true, false, string.Empty);
@@ -92,12 +92,13 @@ namespace Cirrus.Infrastructure
             return Success ? onSuccessAction() : onFailAction();
         }
     }
-    
+
     public sealed class ServiceResponse<T> : ServiceResponse
     {
         public T? Value { get; }
 
-        internal ServiceResponse(T? value, bool success, bool isEmpty, string errorMessage) : base(success, isEmpty, errorMessage)
+        internal ServiceResponse(T? value, bool success, bool isEmpty, string errorMessage)
+            : base(success, isEmpty, errorMessage)
         {
             Value = value;
         }

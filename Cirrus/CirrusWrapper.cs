@@ -85,7 +85,7 @@ namespace Cirrus
             services.AddCirrusServices(options =>
             {
                 options.MacAddress = macAddress;
-                options.ApiKey = apiKey;
+                options.ApiKeys = apiKey;
                 options.ApplicationKey = applicationKey;
             });
 

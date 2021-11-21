@@ -44,7 +44,7 @@ namespace Cirrus.Wrappers
         /// </summary>
         /// <param name="token">Cancellation token.</param>
         /// <returns>Returns a <see cref="Task"/>.</returns>
-        /// <exception cref="ArgumentException">Throws an argument exception if <see cref="CirrusConfig.ApplicationKey"/> or <see cref="CirrusConfig.ApiKey"/> is null, empty, or whitespace.</exception>
+        /// <exception cref="ArgumentException">Throws an argument exception if <see cref="CirrusConfig.ApplicationKey"/> or <see cref="CirrusConfig.ApiKeys"/> is null, empty, or whitespace.</exception>
         Task OpenConnection(CancellationToken token = default);
 
         /// <summary>
@@ -101,7 +101,7 @@ namespace Cirrus.Wrappers
             _log.LogDebug("Creating Realtime Class");
 
             _applicationKey = options.Value.ApplicationKey;
-            _apiKeys = options.Value.ApiKey;
+            _apiKeys = options.Value.ApiKeys;
         }
 
         /// <inheritdoc />

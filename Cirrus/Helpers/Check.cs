@@ -17,7 +17,19 @@ namespace Cirrus.Helpers
         internal static void IsNullOrWhitespace(string? val)
         {
             if (string.IsNullOrWhiteSpace(val))
-                throw new ArgumentException("Value cannot be null or whitespace", nameof(val));
+                throw new ArgumentException("Value cannot be null or whitespace.", nameof(val));
+        }
+
+        /// <summary>
+        /// Check to see if this string is null or whitespace
+        /// </summary>
+        /// <param name="val">String to check.</param>
+        /// <param name="paramName">Name of parameter</param>
+        /// <exception cref="ArgumentException">Throws an argument exception if all strings are null or whitespace.</exception>
+        internal static void IsNullOrWhitespace(string? val, string paramName)
+        {
+            if (string.IsNullOrWhiteSpace(val))
+                throw new ArgumentException("Value cannot be null or whitespace.", paramName);
         }
 
         /// <summary>
@@ -28,7 +40,7 @@ namespace Cirrus.Helpers
         internal static void AreAllNullOrWhiteSpace(params string?[] val)
         {
             var result = val.All(string.IsNullOrWhiteSpace);
-            if (result) throw new ArgumentException("Value cannot be null or whitespace", nameof(val));
+            if (result) throw new ArgumentException("Value cannot be null or whitespace.", nameof(val));
         }
 
         /// <summary>
@@ -40,12 +52,6 @@ namespace Cirrus.Helpers
         {
             var result = strings.All(string.IsNullOrWhiteSpace);
             if (result) throw new ArgumentException("Value cannot be null or whitespace", nameof(strings));
-        }
-
-        internal static void IsNullOrWhitespace(string? val, string paramName)
-        {
-            if (string.IsNullOrWhiteSpace(val))
-                throw new ArgumentException("Value cannot by null or whitespace.", paramName);
         }
     }
 }

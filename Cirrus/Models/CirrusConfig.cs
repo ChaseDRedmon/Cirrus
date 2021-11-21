@@ -11,7 +11,7 @@ namespace Cirrus.Models
     public sealed class CirrusConfig
     {
         public string? MacAddress { get; set; }
-        public List<string> ApiKey { get; set; } = null!;
+        public List<string> ApiKeys { get; set; } = null!;
         public string ApplicationKey { get; set; } = null!;
     }
 }

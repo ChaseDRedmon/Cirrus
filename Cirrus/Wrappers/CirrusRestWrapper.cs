@@ -159,9 +159,9 @@ namespace Cirrus.Wrappers
         {
             _log.LogTrace("[FetchDeviceDataAsync] MacAddress: {MacAddress}, ApiKey: {ApiKey}, ApplicationKey: {ApplicationKey}", MacAddress, ApiKey, ApplicationKey);
             
-            Check.IsNullOrWhitespace(MacAddress);
-            Check.IsNullOrWhitespace(ApiKey);
-            Check.IsNullOrWhitespace(ApplicationKey);
+            Check.IsNullOrWhitespace(MacAddress, nameof(MacAddress));
+            Check.IsNullOrWhitespace(ApiKey, nameof(ApiKey));
+            Check.IsNullOrWhitespace(ApplicationKey, nameof(ApplicationKey));
             
             if (limit <= 0)
                 return Enumerable.Empty<Device>();

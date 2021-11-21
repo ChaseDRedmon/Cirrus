@@ -6,8 +6,13 @@ namespace Cirrus.Helpers
     {
         internal static void IsNullOrWhitespace(string? val)
         {
-            if(string.IsNullOrWhiteSpace(val))
-                throw new ArgumentException("Value cannot be null or whitespace.", nameof(val));
+            IsNullOrWhitespace(val, nameof(val));
+        }
+
+        internal static void IsNullOrWhitespace(string? val, string paramName)
+        {
+            if (string.IsNullOrWhiteSpace(val))
+                throw new ArgumentException("Value cannot by null or whitespace.", paramName);
         }
     }
 }

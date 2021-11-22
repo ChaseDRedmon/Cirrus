@@ -176,7 +176,7 @@ namespace Cirrus.Wrappers
         public CirrusRestWrapper(IOptions<CirrusConfig> options, ICirrusService service, ILogger<CirrusRestWrapper>? logger = null)
         {
             MacAddress = options.Value.MacAddress;
-            ApiKey = options.Value.ApiKey.First();
+            ApiKey = options.Value.ApiKeys.First();
             ApplicationKey = options.Value.ApplicationKey;
 
             _service = service;

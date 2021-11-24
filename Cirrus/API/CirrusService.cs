@@ -71,10 +71,10 @@ namespace Cirrus.API
 
             using var responseMessage = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
             await using var stream = await responseMessage.Content.ReadAsStreamAsync(cancellationToken);
-            var model = JsonSerializer.Deserialize<IEnumerable<T>>(stream, new JsonSerializerOptions
+            var model = await JsonSerializer.DeserializeAsync<IEnumerable<T>>(stream, new JsonSerializerOptions
             {
                 NumberHandling = JsonNumberHandling.AllowReadingFromString
-            });
+            }, cancellationToken);
 
             return ServiceResponse.Ok(model);
         }

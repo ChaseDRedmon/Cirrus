@@ -38,7 +38,7 @@ namespace Cirrus.Wrappers
         ///     The amount of items to return. Maximum is 288. Items are in 5 minute increments, meaning 288 items
         ///     is 1 day's worth of data.
         /// </param>
-        /// <param name="cancellationToken">Cancellation Token. <see cref="CancellationToken" /></param>
+        /// <param name="cancellationToken">Cancellation Token. <see cref="CancellationToken" />.</param>
         /// <returns>Returns a <see cref="Device" /> object.</returns>
         /// <exception cref="ArgumentException">Throws ArgumentException if <see cref="ApiKey"/>,
         /// <see cref="ApplicationKey"/>, or <see cref="MacAddress"/> are null, empty, or whitespace

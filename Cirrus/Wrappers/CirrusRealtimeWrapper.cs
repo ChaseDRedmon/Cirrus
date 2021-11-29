@@ -13,6 +13,9 @@ using SocketIOClient;
 
 namespace Cirrus.Wrappers
 {
+    /// <summary>
+    /// A websocket.io wrapper for interfacing with the Ambient Weather Websocket Server
+    /// </summary>
     public interface ICirrusRealtime : IDisposable, IAsyncDisposable
     {
         /// <summary>
@@ -163,14 +166,14 @@ namespace Cirrus.Wrappers
         {
             Check.IsNullOrWhitespace(_applicationKey);
             Check.AreAllNullOrWhiteSpace(_apiKeys);
-            
+
             return new SocketIO(BaseAddress, new SocketIOOptions
             {
                 EIO = 4,
                 Query = new Dictionary<string, string>
                 {
-                    {"api", "1"},
-                    {"applicationKey", _applicationKey}
+                    { "api", "1" },
+                    { "applicationKey", _applicationKey! }
                 },
                 Reconnection = true,
                 ReconnectionDelay = 5000,
@@ -188,7 +191,7 @@ namespace Cirrus.Wrappers
             _log.LogInformation("Connected to API");
             _log.LogInformation("Sending Subcribe Command: {BaseAddress}", BaseAddress.AbsoluteUri);
             _log.LogDebug("List: {@list}", _apiKeys);
-            
+
             await Client!.EmitAsync("subscribe", new ApiKeyWrapper(_apiKeys));
         }
         

@@ -13,6 +13,9 @@ using Microsoft.Extensions.Options;
 
 namespace Cirrus.Wrappers
 {
+    /// <summary>
+    /// A wrapper for querying the Ambient Weather REST API
+    /// </summary>
     public interface ICirrusRestWrapper : IDisposable
     {
         /// <summary>
@@ -33,7 +36,7 @@ namespace Cirrus.Wrappers
         /// <summary>
         ///     Fetches a Weather Station's data based on its MAC Address from the Ambient Weather API
         /// </summary>
-        /// <param name="endDate">Date to query information for; if <see cref="endDate"/> is null, then the Ambient Weather API will return data for the current date</param>
+        /// <param name="endDate">Date to query information for; if <see cref="endDate"/> is null, then the Ambient Weather API will return data for the current date.</param>
         /// <param name="limit">
         ///     The amount of items to return. Maximum is 288. Items are in 5 minute increments, meaning 288 items
         ///     is 1 day's worth of data.
@@ -48,8 +51,8 @@ namespace Cirrus.Wrappers
         /// <summary>
         ///     Fetches a Weather Station's data based on its MAC Address from the Ambient Weather API
         /// </summary>
-        /// <typeparam name="{T}"> A Device Data POCO. </typeparam>
-        /// <param name="endDate">Date to query information for; if <see cref="endDate"/> is null, then the Ambient Weather API will return data for the current date</param>
+        /// <typeparam name="T"> A Device Data POCO. </typeparam>
+        /// <param name="endDate">Date to query information for; if <see cref="endDate"/> is null, then the Ambient Weather API will return data for the current date.</param>
         /// <param name="limit">
         ///     The amount of items to return. Maximum is 288. Items are in 5 minute increments, meaning 288 items
         ///     is 1 day's worth of data.
@@ -116,10 +119,10 @@ namespace Cirrus.Wrappers
         /// <summary>
         ///     Fetch a list of devices and device metadata associated with the user's account and the most recent weather data for each device
         /// </summary>
-        /// <typeparam name="{T}"> A User Device Data POCO. </typeparam>
+        /// <typeparam name="T"> A User Device Data POCO. </typeparam>
         /// <param name="cancellationToken">Cancellation Token. <see cref="CancellationToken" />.</param>
         /// <returns>
-        /// Returns an IEnumerable of <see cref="{T}" /> objects.
+        /// Returns an IEnumerable of <see cref="T" /> objects.
         /// If the result does not have a success status code, returns an empty <see cref="IEnumerable{Device}"/>
         /// </returns>
         /// <exception cref="ArgumentException">Throws ArgumentException if <see cref="ApiKey"/> or

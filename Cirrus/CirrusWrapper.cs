@@ -3,10 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using Cirrus.Extensions;
 using Cirrus.Models;
 using Cirrus.Wrappers;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -39,7 +37,6 @@ namespace Cirrus
         /// <exception cref="ArgumentException">When <see cref="endDate"/> is less than <see cref="startDate"/>.</exception>
         IAsyncEnumerable<IEnumerable<Device>> FetchDeviceHistory(DateTimeOffset? startDate, DateTimeOffset? endDate, bool sliceTheListFromTheBeginningOfTheList = false, int limit = 288, CancellationToken token = default);
         
-        
         /// <inheritdoc cref="FetchDeviceHistory(DateTimeOffset?, DateTimeOffset?, bool, int, CancellationToken)"/>
         /// <typeparam name="T"> A POCO to Deserialize JSON too.</typeparam>
         IAsyncEnumerable<IEnumerable<T>> FetchDeviceHistory<T>(DateTimeOffset? startDate, DateTimeOffset? endDate, bool sliceTheListFromTheBeginningOfTheList = false, int limit = 288, CancellationToken token = default)
@@ -61,7 +58,7 @@ namespace Cirrus
         /// <returns><see cref="IAsyncEnumerable{IEnumerable}"/>.</returns>
         /// <exception cref="ArgumentException">When the number of <see cref="numberOfDaysToGoBack"/>.Days is less than or equal to 0.</exception>
         IAsyncEnumerable<IEnumerable<Device>> FetchDeviceHistory(TimeSpan numberOfDaysToGoBack, bool sliceTheListFromTheBeginningOfTheList = false, bool includeToday = true, int limit = 288, CancellationToken token = default);
-        
+
         /// <inheritdoc cref="FetchDeviceHistory(TimeSpan, bool, bool, int, CancellationToken)"/>
         /// <typeparam name="T"> A POCO to Deserialize JSON too.</typeparam>
         IAsyncEnumerable<IEnumerable<T>> FetchDeviceHistory<T>(TimeSpan numberOfDaysToGoBack, bool sliceTheListFromTheBeginningOfTheList = false, bool includeToday = true, int limit = 288, CancellationToken token = default)
@@ -69,7 +66,7 @@ namespace Cirrus
 
         /// <inheritdoc cref="FetchDeviceHistory(TimeSpan, bool, bool, int, CancellationToken)" />
         IAsyncEnumerable<IEnumerable<Device>> FetchDeviceHistory(int? numberOfDaysToGoBack, bool sliceTheListFromTheBeginningOfTheList = false, bool includeToday = true, int limit = 288, CancellationToken token = default);
-        
+
         /// <inheritdoc cref="FetchDeviceHistory(TimeSpan, bool, bool, int, CancellationToken)" />
         /// <typeparam name="T"> A POCO to Deserialize JSON too.</typeparam>
         IAsyncEnumerable<IEnumerable<T>> FetchDeviceHistory<T>(int? numberOfDaysToGoBack, bool sliceTheListFromTheBeginningOfTheList = false, bool includeToday = true, int limit = 288, CancellationToken token = default)
@@ -81,33 +78,6 @@ namespace Cirrus
     {
         private readonly ICirrusRestWrapper _restWrapper;
         private readonly ILogger<CirrusWrapper> _log;
-
-        /// <summary>
-        /// Creates an instance of the <see cref="CirrusWrapper"/> class
-        /// </summary>
-        /// <param name="macAddress">Device Mac Address.</param>
-        /// <param name="apiKey">Ambient Weather API Key.</param>
-        /// <param name="applicationKey">Ambient Weather Application Key.</param>
-        /// <remarks>
-        /// You must supply non-null, non-whitespace, non-empty strings for the
-        /// <see cref="apiKey"/>, <see cref="applicationKey"/>, and <see cref="macAddress"/>
-        /// parameters when calling any function within the <see cref="CirrusWrapper"/> class.
-        /// The RestWrapper will throw an ArgumentException if these values are null, empty, or whitespace
-        /// </remarks>
-        /// <returns> Return an instance of <see cref="ICirrusWrapper"/>.</returns>
-        public static ICirrusWrapper Create(string macAddress, List<string> apiKey, string applicationKey)
-        {
-            var services = new ServiceCollection();
-            services.AddCirrusServices(options =>
-            {
-                options.MacAddress = macAddress;
-                options.ApiKeys = apiKey;
-                options.ApplicationKey = applicationKey;
-            });
-
-            var provider = services.BuildServiceProvider();
-            return provider.GetRequiredService<ICirrusWrapper>();
-        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="CirrusWrapper"/> class.
@@ -128,12 +98,13 @@ namespace Cirrus
             
             return FetchDeviceHistory<Device>(startDate, endDate, sliceTheListFromTheBeginningOfTheList, limit, token);
         }
-
+        
+        /// <inheritdoc />
         public IAsyncEnumerable<IEnumerable<T>> FetchDeviceHistory<T>(DateTimeOffset? startDate, DateTimeOffset? endDate, bool sliceTheListFromTheBeginningOfTheList = false, int limit = 288, CancellationToken token = default) where T : class, new()
         {
             _log.LogTrace("Fetching device history");
             _log.LogDebug("Start Date: {StartDate}, End Date: {EndDate}, Slice: {SliceList}, Limit: {Limit}", startDate, endDate, sliceTheListFromTheBeginningOfTheList, limit);
-            
+
             endDate ??= DateTimeOffset.UtcNow;
 
             if (endDate < startDate)
@@ -149,6 +120,7 @@ namespace Cirrus
             return FetchDeviceHistory<Device>(numberOfDaysToGoBack, sliceTheListFromTheBeginningOfTheList, includeToday, limit, token);
         }
 
+        /// <inheritdoc />
         public IAsyncEnumerable<IEnumerable<T>> FetchDeviceHistory<T>(TimeSpan numberOfDaysToGoBack, bool sliceTheListFromTheBeginningOfTheList = false, bool includeToday = true, int limit = 288, CancellationToken token = default)
             where T : class, new()
         {

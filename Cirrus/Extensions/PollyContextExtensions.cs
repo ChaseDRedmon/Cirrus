@@ -3,7 +3,10 @@ using Polly;
 
 namespace Cirrus.Extensions
 {
-    public static class PollyContextExtensions
+    /// <summary>
+    /// Logger Extension Class to get a logger for Polly Policies
+    /// </summary>
+    internal static class PollyContextExtensions
     {
         private static readonly string LoggerKey = "ILogger";
 
@@ -15,7 +18,7 @@ namespace Cirrus.Extensions
 
         public static ILogger? GetLogger(this Context context)
         {
-            if (context.TryGetValue(LoggerKey, out object logger))
+            if (context.TryGetValue(LoggerKey, out var logger))
             {
                 return logger as ILogger;
             }

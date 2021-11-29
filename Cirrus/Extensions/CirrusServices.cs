@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using Cirrus.API;
 using Cirrus.Models;
 using Cirrus.Wrappers;
@@ -9,6 +10,12 @@ namespace Cirrus.Extensions
 {
     public static class CirrusServices
     {
+        /// <summary>
+        /// Adds all internal services required by the Cirrus library
+        /// </summary>
+        /// <param name="services">Service collection.</param>
+        /// <param name="setupAction">Cirrus configuration class for API Keys, MacAddresses, and Application Key</param>
+        /// <returns>Service Collection.</returns>
         public static IServiceCollection AddCirrusServices(this IServiceCollection services, Action<CirrusConfig> setupAction)
         {
             var policyRegistry = new PolicyRegistry
@@ -23,6 +30,7 @@ namespace Cirrus.Extensions
                 .Configure(setupAction)
                 .AddTransient<LoggingContext>()
                 .AddScoped<Limiter>()
+                .AddScoped<ICirrusRealtime, CirrusRealtime>()
                 .AddScoped<ICirrusRestWrapper, CirrusRestWrapper>()
                 .AddScoped<ICirrusWrapper, CirrusWrapper>()
                 .AddPolicyRegistry(policyRegistry);
@@ -35,7 +43,7 @@ namespace Cirrus.Extensions
                 })
                 .AddHttpMessageHandler<LoggingContext>()
                 .AddHttpMessageHandler<Limiter>()
-                .SetHandlerLifetime(TimeSpan.FromMinutes(2))
+                .SetHandlerLifetime(Timeout.InfiniteTimeSpan)
                 .AddPolicyHandlerFromRegistry(nameof(Policies.GetRetryPolicy))
                 .AddPolicyHandlerFromRegistry(nameof(Policies.CheckAuthorizedPolicy))
                 .AddPolicyHandlerFromRegistry(nameof(Policies.GetCircuitBreakerPolicy))

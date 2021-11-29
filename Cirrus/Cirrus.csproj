@@ -7,9 +7,9 @@
         <Authors>Chase Redmon</Authors>
         <Description>Ambient Weather API</Description>
         <PackageTags>Ambient Weather API</PackageTags>
-        <PackageVersion>2.0.0-rc.1</PackageVersion>
-        <AssemblyVersion>1.2.0</AssemblyVersion>
-        <FileVersion>1.2.0</FileVersion>
+        <PackageVersion>2.0.0</PackageVersion>
+        <AssemblyVersion>2.0.0</AssemblyVersion>
+        <FileVersion>2.0.0</FileVersion>
         <Copyright>MIT 2021 Chase Redmon</Copyright>
         <PackageProjectUrl>https://github.com/ChaseDRedmon/Cirrus</PackageProjectUrl>
         <RepositoryUrl>https://github.com/ChaseDRedmon/Cirrus</RepositoryUrl>
@@ -17,8 +17,10 @@
         <LangVersion>9</LangVersion>
         <PackageReleaseNotes>
             Removed Newtonsoft.Json, replaced with System.Text.Json.
-            Added Polly Support and rate limiting (if internal DI container is used)
+            Added Polly Support and rate limiting to respect AW's ratelimit
+            Removed ICirrusRestWrapper.Create(); Library must be added to a ServiceCollection with .AddCirrusServices();
             Changes to IDisposable &amp; IAsyncDisposable Implementations on Wrapper classes
+            Added generic methods to allow user's to pass in their own STJson POCOs
             Reordered parameters on RestWrapper query methods
             Full internal API restructuring; conversion of classes to records.
             Added JSON Extensions to facilitate deserialization of events from Realtime Wrapper.

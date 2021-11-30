@@ -139,19 +139,18 @@ namespace Cirrus.Wrappers
         /// <inheritdoc />
         public async Task Subscribe(CancellationToken token = default)
         {
-            if (Client is null) return;
-
+            if (Client is null || Client.Disconnected) return;
+            
             _log.LogInformation("Subscribing to WebSocket service");
             _log.LogInformation("Sending Subcribe Command: {BaseAddress}", BaseAddress.AbsolutePath);
             _log.LogDebug("List: {@list}", _apiKeys);
-
             await Client!.EmitAsync("subscribe", token, _apiKeys);
         }
 
         /// <inheritdoc />
         public async Task Unsubscribe(CancellationToken token = default)
         {
-            if (Client is null) return;
+            if (Client is null || Client.Disconnected) return;
 
             _log.LogInformation("Unsubscribing from the Ambient Weather websocket service");
             await Client.EmitAsync("unsubscribe", token);

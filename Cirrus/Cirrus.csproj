@@ -7,7 +7,7 @@
         <Authors>Chase Redmon</Authors>
         <Description>Ambient Weather API</Description>
         <PackageTags>Ambient Weather API</PackageTags>
-        <PackageVersion>2.0.0</PackageVersion>
+        <PackageVersion>2.0.1</PackageVersion>
         <AssemblyVersion>2.0.0</AssemblyVersion>
         <FileVersion>2.0.0</FileVersion>
         <Copyright>MIT 2021 Chase Redmon</Copyright>
@@ -15,20 +15,7 @@
         <RepositoryUrl>https://github.com/ChaseDRedmon/Cirrus</RepositoryUrl>
         <PackageLicenseUrl>https://github.com/ChaseDRedmon/Cirrus/blob/release/LICENSE</PackageLicenseUrl>
         <LangVersion>9</LangVersion>
-        <PackageReleaseNotes>
-            Removed Newtonsoft.Json, replaced with System.Text.Json.
-            Added Polly Support and rate limiting to respect AW's ratelimit
-            Removed ICirrusRestWrapper.Create(); Library must be added to a ServiceCollection with .AddCirrusServices();
-            Changes to IDisposable &amp; IAsyncDisposable Implementations on Wrapper classes
-            Added generic methods to allow user's to pass in their own STJson POCOs
-            Reordered parameters on RestWrapper query methods
-            Full internal API restructuring; conversion of classes to records.
-            Added JSON Extensions to facilitate deserialization of events from Realtime Wrapper.
-            Bumped SocketIO to version 3.0.3
-            Added missing parameters from Device Model.
-            Renamed parmeters in Device Model.
-            Fixed CirrusRealtime Websocket Failing to connect due to changes with apikey and application key serialization
-        </PackageReleaseNotes>
+        <PackageReleaseNotes>Fixed a small bug when subscribing and unsubscribing on a disconnected client in Realtime Wrapper</PackageReleaseNotes>
 		<DebugType>embedded</DebugType>
 		<EnableNETAnalyzers>True</EnableNETAnalyzers>
 		<AnalysisLevel>6.0</AnalysisLevel>

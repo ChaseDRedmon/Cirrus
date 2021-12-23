@@ -793,6 +793,30 @@ namespace Cirrus.Models
         public double? DewPointFahrenheit10 { get; init; }
 
         /// <summary>
+        /// The number of lightning strikes per day
+        /// </summary>
+        [JsonPropertyName("lightning_day")]
+        public int? LightningStrikesPerDay { get; init; }
+
+        /// <summary>
+        /// The number of lightning strikes within the hour
+        /// </summary>
+        [JsonPropertyName("lightning_hour")]
+        public int? LightningStrikesPerHours { get; init; }
+
+        /// <summary>
+        /// The time of the last lightning strike (in UTC)
+        /// </summary>
+        [JsonPropertyName("lightning_time")]
+        public DateTimeOffset? LastLightningStrikeTime { get; init; }
+
+        /// <summary>
+        /// Distance of the lightning strike from the sensor in miles
+        /// </summary>
+        [JsonPropertyName("lightning_distance")]
+        public double? LightningStrikeDistance { get; init; }
+
+        /// <summary>
         ///     Weather Station Mac Address.
         ///     This value is always null when querying the REST API.
         ///     This value is always populated when receiving events from the Websocket (Realtime) API.

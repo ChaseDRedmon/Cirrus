@@ -7,7 +7,7 @@
         <Authors>Chase Redmon</Authors>
         <Description>Ambient Weather API</Description>
         <PackageTags>Ambient Weather API</PackageTags>
-        <PackageVersion>2.0.1</PackageVersion>
+        <PackageVersion>2.0.2</PackageVersion>
         <AssemblyVersion>2.0.0</AssemblyVersion>
         <FileVersion>2.0.0</FileVersion>
         <Copyright>MIT 2021 Chase Redmon</Copyright>
@@ -15,7 +15,7 @@
         <RepositoryUrl>https://github.com/ChaseDRedmon/Cirrus</RepositoryUrl>
         <PackageLicenseUrl>https://github.com/ChaseDRedmon/Cirrus/blob/release/LICENSE</PackageLicenseUrl>
         <LangVersion>9</LangVersion>
-        <PackageReleaseNotes>Fixed a small bug when subscribing and unsubscribing on a disconnected client in Realtime Wrapper</PackageReleaseNotes>
+        <PackageReleaseNotes>Support for lightning strike sensors per API documentation</PackageReleaseNotes>
 		<DebugType>embedded</DebugType>
 		<EnableNETAnalyzers>True</EnableNETAnalyzers>
 		<AnalysisLevel>6.0</AnalysisLevel>

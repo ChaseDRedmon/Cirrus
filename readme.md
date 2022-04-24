@@ -9,5 +9,5 @@ Cirrus is a small library for wrapping the Ambient Weather API endpoints - Both 
 ## Getting Started
 Check out the wiki here: https://github.com/ChaseDRedmon/Cirrus/wiki
 
-## Sample application: 
-If you want to quickly check out a sample application to get your project up and running, check here: https://github.com/ChaseDRedmon/CirrusSample
+## Sample application
+Check out this sample application to get your project up and running: https://github.com/ChaseDRedmon/CirrusSample

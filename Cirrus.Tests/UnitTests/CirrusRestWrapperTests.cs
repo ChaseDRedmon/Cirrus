@@ -29,7 +29,7 @@ namespace Cirrus.Tests.UnitTests
             var mockCirrusService = new Mock<API.ICirrusService>();
 
             IEnumerable<Device> expectedDeviceList = new List<Device>
-                { new Device { MacAddress = SampleMacAddress } };
+                { new() { MacAddress = SampleMacAddress } };
 
             mockCirrusService.Setup(
                 x => x.Fetch<Device>(
@@ -38,10 +38,10 @@ namespace Cirrus.Tests.UnitTests
                     It.IsAny<CancellationToken>()
                 )
             ).ReturnsAsync(
-                ServiceResponse.Ok<IEnumerable<Device>>(expectedDeviceList)
+                ServiceResponse.Ok(expectedDeviceList)
             ).Verifiable(); 
 
-            using var cirrusRestWrapper = new CirrusRestWrapper(
+            var cirrusRestWrapper = new CirrusRestWrapper(
                 options: GetCirrusConfig(SampleApplicationKey, SampleMacAddress, SampleApiKey),
                 service: mockCirrusService.Object
             );
@@ -65,7 +65,7 @@ namespace Cirrus.Tests.UnitTests
         {
             var mockCirrusService = new Mock<API.ICirrusService>();
 
-            using var cirrusRestWrapper = new CirrusRestWrapper(
+            var cirrusRestWrapper = new CirrusRestWrapper(
                 options: GetCirrusConfig(SampleApplicationKey, SampleMacAddress, SampleApiKey),
                 service: mockCirrusService.Object
             );
@@ -93,7 +93,7 @@ namespace Cirrus.Tests.UnitTests
                 ServiceResponse.Fail<IEnumerable<Device>>("Error occurred!")
             ).Verifiable(); 
 
-            using var cirrusRestWrapper = new CirrusRestWrapper(
+            var cirrusRestWrapper = new CirrusRestWrapper(
                 options: GetCirrusConfig(SampleApplicationKey, SampleMacAddress, SampleApiKey),
                 service: mockCirrusService.Object
             );
@@ -113,7 +113,7 @@ namespace Cirrus.Tests.UnitTests
         {
             var mockCirrusService = new Mock<API.ICirrusService>();
 
-            using var cirrusRestWrapper = new CirrusRestWrapper(
+            var cirrusRestWrapper = new CirrusRestWrapper(
                 options: GetCirrusConfig(applicationKey, macAddress, apiKey),
                 service: mockCirrusService.Object
             );

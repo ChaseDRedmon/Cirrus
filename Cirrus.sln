@@ -1,16 +1,24 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cirrus", "Cirrus\Cirrus.csproj", "{D78D29C1-7C3A-43B1-856A-F122BE09B628}"
+# Visual Studio Version 17
+VisualStudioVersion = 17.2.32210.308
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cirrus", "Cirrus\Cirrus.csproj", "{D78D29C1-7C3A-43B1-856A-F122BE09B628}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cirrus.Tests", "Cirrus.Tests\Cirrus.Tests.csproj", "{73124AB0-4D1A-4523-8992-768C88ABF422}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cirrus.Tests", "Cirrus.Tests\Cirrus.Tests.csproj", "{73124AB0-4D1A-4523-8992-768C88ABF422}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{7DB0C4AC-D7D3-442B-B0E7-5F1AB766E894}"
-ProjectSection(SolutionItems) = preProject
-	LICENSE.txt = LICENSE.txt
-	readme.md = readme.md
-EndProjectSection
+	ProjectSection(SolutionItems) = preProject
+		LICENSE.txt = LICENSE.txt
+		readme.md = readme.md
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{138BAB78-8684-45C7-8B01-6AB8C0276A07}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{6C12736C-FF5C-4B83-A6C0-4FF6E89E346E}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,8 +35,14 @@ Global
 		{73124AB0-4D1A-4523-8992-768C88ABF422}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{73124AB0-4D1A-4523-8992-768C88ABF422}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{D78D29C1-7C3A-43B1-856A-F122BE09B628} = {7DB0C4AC-D7D3-442B-B0E7-5F1AB766E894}
 		{73124AB0-4D1A-4523-8992-768C88ABF422} = {138BAB78-8684-45C7-8B01-6AB8C0276A07}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C47B233F-A8AD-4E28-A4C9-BF16B683989E}
 	EndGlobalSection
 EndGlobal

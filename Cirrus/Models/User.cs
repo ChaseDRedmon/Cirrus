@@ -1,8 +1,9 @@
-﻿using System.Collections.Generic;
+﻿namespace Cirrus.Models;
+
+using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
-namespace Cirrus.Models
-{
+#if NET5_0_OR_GREATER
     public sealed record Geo
     {
         /// <summary>
@@ -122,4 +123,124 @@ namespace Cirrus.Models
         
         // TODO: Need to add an "error" field to store the error message that the Realtime API returns if API or Application keys are invalid, null, or in the incorrect serialized format
     }
+#else
+public sealed class Geo
+{
+    /// <summary>
+    /// The Type of Geo Coordinates. i.e. "Point"
+    /// </summary>
+    [JsonPropertyName("type")]
+    public string? Type { get; set; }
+
+    /// <summary>
+    /// A list of doubles containing the lat/lon coordinates
+    /// coordinates[0] is longitude
+    /// coordinates[1] is latitude
+    /// </summary>
+    [JsonPropertyName("coordinates")]
+    public IReadOnlyList<double>? Coordinates { get; set; }
 }
+
+public sealed class Coords2
+{
+    /// <summary>
+    /// Latitude of the weather station
+    /// </summary>
+    [JsonPropertyName("lat")]
+    public double Latitude { get; set; }
+
+    /// <summary>
+    /// Longitude of the weather station
+    /// </summary>
+    [JsonPropertyName("lon")]
+    public double Longitude { get; set; }
+}
+
+public sealed class Coords
+{
+    /// <summary>
+    /// Geographic coordinates of the weather station
+    /// </summary>
+    [JsonPropertyName("coords")]
+    public Coords2? Coord2 { get; set; }
+}
+
+// Root myDeserializedClass = JsonSerializer.Deserialize<UserDevice>(myJsonResponse);
+public sealed class Info
+{
+    /// <summary>
+    /// The name of the weather station configured in the AmbientWeather dashboard
+    /// </summary>
+    [JsonPropertyName("name")]
+    public string Name { get; set; }
+
+    [JsonPropertyName("location")]
+    public string Location { get; set; }
+
+    [JsonPropertyName("address")]
+    public string Address { get; set; }
+
+    [JsonPropertyName("elevation")]
+    public double Elevation { get; set; }
+
+    /// <summary>
+    /// City Location
+    /// </summary>
+    [JsonPropertyName("coords")]
+    public Coords? Coords { get; set; }
+
+    [JsonPropertyName("geo")]
+    public Geo? Geo { get; set; }
+}
+
+public sealed class UserDevice
+{
+    /// <summary>
+    /// Weather Station Mac Address
+    /// </summary>
+    [JsonPropertyName("macAddress")]
+    public string? MacAddress { get; set; }
+
+    /// <summary>
+    /// Instance of <see cref="Info"/> class
+    /// </summary>
+    [JsonPropertyName("info")]
+    public Info? Info { get; set; }
+
+    /// <summary>
+    /// Instance of <see cref="Device"/> class
+    /// </summary>
+    [JsonPropertyName("lastData")]
+    public Device? LastData { get; set; }
+
+    /// <summary>
+    /// The API Key used for the subscribe command
+    /// </summary>
+    [JsonPropertyName("apiKey")]
+    public string? ApiKey { get; set; }
+}
+
+public sealed class Root
+{
+    /// <summary>
+    /// List of devices belonging to the user
+    /// </summary>
+    [JsonPropertyName("devices")]
+    public ICollection<UserDevice>? Devices { get; set; }
+
+    /// <summary>
+    /// List of invalid API keys
+    /// After sending the 'unsubscribe' command, ambient weather returns a list of invalid API keys
+    /// </summary>
+    [JsonPropertyName("invalidApiKeys")]
+    public ICollection<string?>? InvalidAPIKeys { get; set; }
+
+    /// <summary>
+    /// The returned event type
+    /// </summary>
+    [JsonPropertyName("method")]
+    public string Method { get; set; }
+        
+    // TODO: Need to add an "error" field to store the error message that the Realtime API returns if API or Application keys are invalid, null, or in the incorrect serialized format
+}
+#endif

@@ -8,6 +8,7 @@ using Cirrus.Models;
 public record ApiKeyWrapper([property: JsonPropertyName("apiKeys")] IEnumerable<string> ApiKeys);
 
 public record OnSubscribeEventArgs(Root UserDevice);
+
 public record OnDataReceivedEventArgs(Device Device);
 
 #else

@@ -23,14 +23,17 @@ internal static class Policies
         var delay = Backoff.DecorrelatedJitterBackoffV2(medianFirstRetryDelay: TimeSpan.FromSeconds(1), retryCount: 5);
 
 #if NETSTANDARD2_1_OR_GREATER
-            return Policy
-                .HandleResult<HttpResponseMessage>(msg => msg.StatusCode == HttpStatusCode.TooManyRequests)
-                .WaitAndRetryAsync(
-                    delay,
-                    onRetry: (outcome, timespan, retryAttempt, context) =>
-                    {
-                        context.GetLogger()?.LogWarning("Too many requests submitted within 1 second; retrying in {Timespan}ms for the {RetryAttempt} time", timespan.TotalMilliseconds, retryAttempt);
-                    });
+        return Policy
+            .HandleResult<HttpResponseMessage>(msg => msg.StatusCode == HttpStatusCode.TooManyRequests)
+            .WaitAndRetryAsync(
+                delay,
+                onRetry: (outcome, timespan, retryAttempt, context) =>
+                {
+                    context.GetLogger()
+                        ?.LogWarning(
+                            "Too many requests submitted within 1 second; retrying in {Timespan}ms for the {RetryAttempt} time",
+                            timespan.TotalMilliseconds, retryAttempt);
+                });
 #else
         return Policy
             .HandleResult<HttpResponseMessage>(msg => (int)msg.StatusCode == 429)
@@ -51,14 +54,15 @@ internal static class Policies
     internal static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
     {
         var delay = Backoff.DecorrelatedJitterBackoffV2(TimeSpan.FromSeconds(1), retryCount: 6);
-        
+
         return HttpPolicyExtensions
             .HandleTransientHttpError()
             .WaitAndRetryAsync(
                 delay,
                 onRetry: (outcome, timespan, retryAttempt, context) =>
                 {
-                    context.GetLogger()?.LogWarning("Delaying for {Delay}ms, then making retry {Retry}", timespan.TotalMilliseconds, retryAttempt);
+                    context.GetLogger()?.LogWarning("Delaying for {Delay}ms, then making retry {Retry}",
+                        timespan.TotalMilliseconds, retryAttempt);
                 });
     }
 
@@ -78,12 +82,11 @@ internal static class Policies
                 6,
                 onBreak: (outcome, state, timespan, context) =>
                 {
-                    context.GetLogger()?.LogWarning("Too many transient HTTP errors have occured; we are pausing for {Delay} seconds", timespan.Seconds);
+                    context.GetLogger()
+                        ?.LogWarning("Too many transient HTTP errors have occured; we are pausing for {Delay} seconds",
+                            timespan.Seconds);
                 },
-                onReset: context =>
-                {
-                    context.GetLogger()?.LogInformation("Resetting the circuit breaker");
-                },
+                onReset: context => { context.GetLogger()?.LogInformation("Resetting the circuit breaker"); },
                 durationOfBreak: TimeSpan.FromMinutes(1),
                 onHalfOpen: () => { });
     }
@@ -103,18 +106,12 @@ internal static class Policies
                 1,
                 onBreak: (outcome, state, timespan, context) =>
                 {
-                    context.GetLogger()?.LogWarning("Invalid API or Application Key; circuit breaker open for {Timespan} seconds", timespan.Seconds);
+                    context.GetLogger()
+                        ?.LogWarning("Invalid API or Application Key; circuit breaker open for {Timespan} seconds",
+                            timespan.Seconds);
                 },
-                onReset: context =>
-                {
-                    context.GetLogger()?.LogInformation("Resetting the circuit breaker");
-                },
+                onReset: context => { context.GetLogger()?.LogInformation("Resetting the circuit breaker"); },
                 durationOfBreak: TimeSpan.FromMinutes(1),
                 onHalfOpen: () => { });
-    }
-
-    internal static IAsyncPolicy RateLimitPolicy()
-    {
-        return Policy.RateLimitAsync(1, TimeSpan.FromSeconds(1.5));
     }
 }

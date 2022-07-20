@@ -3,14 +3,18 @@ using System.Threading;
 using System.Threading.Tasks;
 using Cirrus.Models;
 
-namespace Cirrus.Wrappers;
+namespace Cirrus.Realtime;
 
 /// <summary>
 /// A websocket.io wrapper for interfacing with the Ambient Weather Websocket Server
 /// </summary>
 public interface ICirrusRealtime : IDisposable, IAsyncDisposable
 {
-
+    event EventHandler<OnSubscribeEventArgs> Subscribed;
+    event EventHandler<OnDataReceivedEventArgs> DataReceived;
+    event EventHandler Connected;
+    event EventHandler Disconnected;
+    
     /// <summary>
     /// Opens a connection and subscribes to the Ambient Weather service
     /// </summary>
@@ -40,9 +44,4 @@ public interface ICirrusRealtime : IDisposable, IAsyncDisposable
     /// <param name="token">Cancellation token.</param>
     /// <returns>Returns a <see cref="Task"/>.</returns>
     Task Unsubscribe(CancellationToken token = default);
-}
-
-public interface ICirrusRealtime<T> : ICirrusRealtime
-{
-    
 }

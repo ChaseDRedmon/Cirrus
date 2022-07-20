@@ -1,11 +1,13 @@
-﻿namespace Cirrus;
+﻿using Cirrus.Adapters;
+using Microsoft.Extensions.Logging;
+
+namespace Cirrus;
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using Cirrus.Adapters;
 using Cirrus.Models;
 using Cirrus.Wrappers;
 

@@ -8,9 +8,8 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using Cirrus.Infrastructure;
+using Cirrus.Adapters;
 
 /// <summary>
 /// Cirrus HTTP Client Service for sending REST Requests to the Ambient Weather Server
@@ -42,12 +41,12 @@ public interface ICirrusService
 public sealed class CirrusService : ICirrusService
 {
     private readonly HttpClient _client;
-    private readonly ILogger<CirrusService> _logger;
+    private readonly ICirrusLoggerAdapter<CirrusService>? _logger;
 
-    public CirrusService(HttpClient client, ILogger<CirrusService>? logger = null)
+    public CirrusService(HttpClient client, ICirrusLoggerAdapter<CirrusService>? logger = null)
     {
         _client = client ?? throw new ArgumentNullException(nameof(client));
-        _logger = logger ?? NullLogger<CirrusService>.Instance;
+        _logger = logger;
     }
 
     /// <inheritdoc />
